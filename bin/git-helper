@@ -1,0 +1,11 @@
+#!/bin/bash
+GIT_HELPER_ROOT="$(dirname "$(realpath "$0")")/.."
+
+# Load core functionality
+source "$GIT_HELPER_ROOT/src/utilities/setup.sh"
+
+# Command dispatcher
+case $1 in
+  -h|--help) show_help ;;
+  *) git "$@" ;;
+esac

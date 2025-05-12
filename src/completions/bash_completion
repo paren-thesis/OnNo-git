@@ -1,0 +1,2 @@
+# Bash completions for git-helper
+complete -W "init status log cm rebase bisect" git-helper
