@@ -1,0 +1,135 @@
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Display Git status
+git_status() {
+    echo -e "${GG}Current Git status:${RT}"
+    git status -s
+}
+
+# Commit with a message
+commit_with_message() {
+    git_status
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if [[ -z "$message" ]]; then
+        echo -e "${RE}Error: Commit message cannot be empty.${RT}"
+        return
+    fi
+    git commit -m "$message" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}Changes have been committed with the message: '$message'.${RT}"
+}
+
+# Amend the last commit
+amend_last_commit() {
+    git_status
+    read -p "${GG}Are you sure you want to amend the last commit? (y/n): ${BB}" confirm
+    if [[ $confirm == "y" || $confirm == "Y" ]]; then
+        git commit --amend || echo -e "${RE}Error: Amend operation failed.${RT}"
+        echo -e "${GG}The last commit has been amended.${RT}"
+    else
+        echo -e "${RE}Amend operation canceled.${RT}"
+    fi
+}
+
+# Commit specific files
+commit_specific_files() {
+    git_status
+    read -p "${GG}Enter the file name(s) to commit (space-separated): ${BB}" files
+    read -p "${GG}Enter the commit message: ${BB}" message
+
+    if [[ -z "$files" || -z "$message" ]]; then
+        echo -e "${RE}Error: File(s) and commit message cannot be empty.${RT}"
+        return
+    fi
+
+    # Split files into an array
+    IFS=' ' read -r -a files_array <<< "$files"
+
+    # Check if files exist and are tracked by Git
+    for file in "${files_array[@]}"; do
+        if [[ -z $(git ls-files "$file") ]]; then
+            echo -e "${RE}Error: File '$file' not found or not tracked by Git.${RT}"
+            return
+        fi
+    done
+
+    # Stage and commit the files
+    git add "${files_array[@]}" && git commit -m "$message"
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GG}File(s) '${files_array[*]}' have been committed with the message: '$message'.${RT}"
+    else
+        echo -e "${RE}Error: Commit failed.${RT}"
+    fi
+}
+
+# Skip staging and commit directly
+skip_staging_and_commit() {
+    git_status
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if [[ -z "$message" ]]; then
+        echo -e "${RE}Error: Commit message cannot be empty.${RT}"
+        return
+    fi
+    git commit -a -m "$message" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}Changes have been committed directly with the message: '$message'.${RT}"
+}
+
+commit_and_sign() {
+    git_status
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if [[ -z "$message" ]]; then
+        echo -e "${RE}Error: Commit message cannot be empty.${RT}"
+        return
+    fi
+    git commit -S -m "$message" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}Changes have been committed and signed with the message: '$message'.${RT}"
+}
+
+commit_all_changes() {
+    git_status
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if [[ -z "$message" ]]; then
+        echo -e "${RE}Error: Commit message cannot be empty.${RT}"
+        return
+    fi
+    git add -A && git commit -m "$message" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}All changes have been committed with the message: '$message'.${RT}"
+}
+
+empty_commit() {
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if [[ -z "$message" ]]; then
+        echo -e "${RE}Error: Commit message cannot be empty.${RT}"
+        return
+    fi
+    git commit --allow-empty -m "$message" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}Empty commit created with the message: '$message'.${RT}"
+}
+
+commit_with_date() {
+    git_status
+    read -p "${GG}Enter the commit message: ${BB}" message
+    read -p "${GG}Enter the date (YYYY-MM-DD HH:MM:SS): ${BB}" date
+    if [[ -z "$message" || -z "$date" ]]; then
+        echo -e "${RE}Error: Commit message and date cannot be empty.${RT}"
+        return
+    fi
+    git commit -m "$message" --date="$date" || echo -e "${RE}Error: Commit failed.${RT}"
+    echo -e "${GG}Changes have been committed with the message: '$message' and date: '$date'.${RT}"
+}
+
+view_commit_history() {
+    echo -e "${GG}Commit history:${RT}"
+    git log --oneline
+    echo -e "${GG}Press [Enter] to continue...${RT}"
+    read
+}
+
+undo_last_commit() {
+    read -p "${GG}Are you sure you want to undo the last commit? (y/n): ${BB}" confirm
+    if [[ $confirm == "y" || $confirm == "Y" ]]; then
+        git reset --soft HEAD~1 || echo -e "${RE}Error: Undo operation failed.${RT}"
+        echo -e "${GG}Last commit has been undone. Changes are preserved in the working directory.${RT}"
+    else
+        echo -e "${RE}Undo operation canceled.${RT}"
+    fi
+}

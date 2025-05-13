@@ -1,0 +1,30 @@
+# utils.sh
+
+CY="$(printf '\033[36m')" # CYAN
+GG="$(printf '\033[32m')" # GREEN
+OG="$(printf '\033[33m')" # ORANGE
+BB="$(printf '\033[34m')" # BLUE
+RE="$(printf '\033[31m')" # RED
+RT="$(printf '\e[0m\n')" # RT
+WH="$(printf '\033[37m')" # WH
+
+check_git_repo() {
+    if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+        echo -e "${RE}Error: This is not a Git repository.${RT}"
+        exit 1
+    fi
+}
+
+confirm() {
+    read -p "${RE}Are you sure? (y/n): ${RT}" choice
+    case "$choice" in
+        y|Y ) return 0 ;;
+        n|N ) echo -e "${OG}Operation canceled.${RT}"; return 1 ;;
+        * ) echo -e "${RE}Invalid input. Operation canceled.${RT}"; return 1 ;;
+    esac
+}
+
+git_status() {
+    echo -e "${BB}Current Git Status:${RT}"
+    git status -s
+}
