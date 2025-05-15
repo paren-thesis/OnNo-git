@@ -1,5 +1,5 @@
 #!/bin/bash
 
-source /c/OnNo-git/bin/functions/branch
+source /c/OnNo-git/bin/functions/commit
 
 commit_with_message

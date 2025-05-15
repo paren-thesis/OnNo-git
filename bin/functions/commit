@@ -3,7 +3,7 @@ source /c/OnNo-git/bin/functions/utils/utils
 # Display Git status
 git_status() {
     echo -e "${GG}Current Git status:${RT}"
-    git status -s
+    git status
 }
 
 # Commit with a message
