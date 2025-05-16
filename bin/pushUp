@@ -1,3 +1,5 @@
 #!/bin/bash
 
-source /c/OnNo-git/bin/functions
+source /c/OnNo-git/bin/functions/push
+
+push_up

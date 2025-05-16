@@ -2,7 +2,7 @@
 GIT_HELPER_ROOT="$(dirname "$(realpath "$0")")/.."
 
 # Load core functionality
-source "$GIT_HELPER_ROOT/src/utilities/setup.sh"
+source "$GIT_HELPER_ROOT/bin/functions/utils/utils"
 
 # Command dispatcher
 case $1 in

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+push_up() {
+    git push
+}
+
+push_up_all() {
+    git push --all
+}
+
+push_up_force() {
+    read -p "${GG}Are you sure you want to force push? This can overwrite remote changes! (y/n): ${BB}" confirm
+    if [[ $confirm == "y" || $confirm == "Y" ]]; then
+        git push --force
+        if [ $? -eq 0 ]; then
+            echo -e "${GG}Force push completed successfully!${RT}"
+        else
+            echo -e "${RE}Force push failed.${RT}"
+        fi
+    else
+        echo -e "${RE}Force push canceled.${RT}"
+    fi
+}
+
+push_up_tags() {
+    git push --tags
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Tags pushed successfully!${RT}"
+    else
+        echo -e "${RE}Failed to push tags.${RT}"
+    fi
+}
+
+push_up_upstream() {
+    read -p "${GG}Enter the branch name to set upstream: ${BB}" branch_name
+    git push -u origin "$branch_name"
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Upstream branch set successfully!${RT}"
+    else
+        echo -e "${RE}Failed to set upstream branch.${RT}"
+    fi
+}
+
+
