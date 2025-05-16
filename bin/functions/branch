@@ -1,139 +1,134 @@
 #!/bin/bash
 
+source /c/OnNo-git/bin/functions/utils/common.sh
 source /c/OnNo-git/bin/functions/utils/utils
 
 create_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the new branch: ${BB}" branch_name
-    if [[ ! "$branch_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-        echo -e "${RE}Error: Invalid branch name.${RT}"
-        return
+    if ! validate_branch_name "$branch_name"; then
+        return 1
     fi
-    git checkout -b "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Branch '$branch_name' created successfully!${RT}"
-    else
-        echo -e "${RE}Failed to create branch '$branch_name'.${RT}"
-    fi
+    safe_git_exec checkout -b "$branch_name"
+    show_success "Branch '$branch_name' created successfully!"
 }
 
 # Function to delete a branch
 delete_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the branch to delete: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
     read -p "${GG}Force delete unmerged branch? (y/n): ${BB}" force
     if [[ $force == "y" || $force == "Y" ]]; then
-        git branch -D "$branch_name"
+        safe_git_exec branch -D "$branch_name"
     else
-        git branch -d "$branch_name"
+        safe_git_exec branch -d "$branch_name"
     fi
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Branch '$branch_name' deleted successfully!${RT}"
-    else
-        echo -e "${RE}Failed to delete branch '$branch_name'.${RT}"
-    fi
+    show_success "Branch '$branch_name' deleted successfully!"
 }
 
 # Function to merge a branch
 merge_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the branch to merge: ${BB}" branch_name
-    git merge "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Branch '$branch_name' merged successfully!${RT}"
-    else
-        echo -e "${RE}Merge conflict detected! Resolve conflicts and commit the changes.${RT}"
+    if ! branch_exists "$branch_name"; then
+        return 1
     fi
+    if ! safe_git_exec merge "$branch_name"; then
+        show_error "Merge conflict detected! Resolve conflicts and commit the changes."
+        return 1
+    fi
+    show_success "Branch '$branch_name' merged successfully!"
 }
 
 # Function to list all branches
 list_branches() {
-    echo "${CY}Listing all branches:${RT}"
-    git branch
+    echo -e "${CY}Listing all branches:${RT}"
+    safe_git_exec branch
 }
 
 # Function to switch to a branch
 switch_branch() {
-    list_branches
-    read -p "${GG}Enter the name of the branch to switch to: ${BB}" branch_name
-    git checkout "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Switched to branch '$branch_name' successfully!${RT}"
-    else
-        echo -e "${RE}Failed to switch to branch '$branch_name'.${RT}"
+    show_git_status
+    if has_uncommitted_changes; then
+        show_warning "You have uncommitted changes. Commit or stash them before switching branches."
+        return 1
     fi
+    read -p "${GG}Enter the name of the branch to switch to: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+    safe_git_exec checkout "$branch_name"
+    show_success "Switched to branch '$branch_name' successfully!"
 }
 
 create_remote_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the new branch: ${BB}" branch_name
-    if [[ ! "$branch_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-    
-        echo -e "${RE}Error: Invalid branch name.${RT}"
-        return
+    if ! validate_branch_name "$branch_name"; then
+        return 1
     fi
-    git checkout -b "$branch_name"
-    git push -u origin "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Remote branch '$branch_name' created and pushed successfully!${RT}"
-    else
-        echo -e "${RE}Failed to create remote branch '$branch_name'.${RT}"
-    fi
+    safe_git_exec checkout -b "$branch_name"
+    safe_git_exec push -u origin "$branch_name"
+    show_success "Remote branch '$branch_name' created and pushed successfully!"
 }
 
 delete_remote_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the remote branch to delete: ${BB}" branch_name
-    git push origin --delete "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Remote branch '$branch_name' deleted successfully!${RT}"
-    else
-        echo -e "${RE}Failed to delete remote branch '$branch_name'.${RT}"
+    if ! remote_branch_exists "$branch_name"; then
+        return 1
     fi
+    safe_git_exec push origin --delete "$branch_name"
+    show_success "Remote branch '$branch_name' deleted successfully!"
 }
 
 switch_remote_branch() {
-    git fetch --all
-    list_branches
+    safe_git_exec fetch --all
+    show_git_status
     read -p "${GG}Enter the name of the remote branch to switch to: ${BB}" branch_name
-    git checkout -b "$branch_name" "origin/$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Switched to remote branch '$branch_name' successfully!${RT}"
-    else
-        echo -e "${RE}Failed to switch to remote branch '$branch_name'.${RT}"
+    if ! remote_branch_exists "$branch_name"; then
+        return 1
     fi
+    safe_git_exec checkout -b "$branch_name" "origin/$branch_name"
+    show_success "Switched to remote branch '$branch_name' successfully!"
 }
 
 rebase_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the branch to rebase onto: ${BB}" branch_name
-    git rebase "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Rebase onto '$branch_name' completed successfully!${RT}"
-    else
-        echo -e "${RE}Rebase failed. Resolve conflicts and run 'git rebase --continue'.${RT}"
+    if ! branch_exists "$branch_name"; then
+        return 1
     fi
+    if ! safe_git_exec rebase "$branch_name"; then
+        show_error "Rebase failed. Resolve conflicts and run 'git rebase --continue'"
+        return 1
+    fi
+    show_success "Rebase onto '$branch_name' completed successfully!"
 }
 
 rename_branch() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the current name of the branch: ${BB}" old_name
+    if ! branch_exists "$old_name"; then
+        return 1
+    fi
     read -p "${GG}Enter the new name for the branch: ${BB}" new_name
-    if [[ ! "$new_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-        echo -e "${RE}Error: Invalid branch name.${RT}"
-        return
+    if ! validate_branch_name "$new_name"; then
+        return 1
     fi
-    git branch -m "$old_name" "$new_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Branch renamed from '$old_name' to '$new_name' successfully!${RT}"
-    else
-        echo -e "${RE}Failed to rename branch.${RT}"
-    fi
+    safe_git_exec branch -m "$old_name" "$new_name"
+    show_success "Branch renamed from '$old_name' to '$new_name' successfully!"
 }
 
 view_branch_history() {
-    list_branches
+    show_git_status
     read -p "${GG}Enter the name of the branch to view history: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
     echo -e "${CY}Commit history for branch '$branch_name':${RT}"
-    git log "$branch_name" --oneline
+    safe_git_exec log "$branch_name" --oneline
 }
