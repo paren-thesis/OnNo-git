@@ -1,4 +1,4 @@
-# utils.sh
+#!/bin/bash
 
 CY="$(printf '\033[36m')" # CYAN
 GG="$(printf '\033[32m')" # GREEN
@@ -26,5 +26,189 @@ confirm() {
 
 git_status() {
     echo -e "${BB}Current Git Status:${RT}"
-    git status -s
+    git status
 }
+
+#Check if git is installed and available
+check_git() {
+    if ! command -v git &>/dev/null; then
+        echo -e "${RE}Error: Git is not installed!${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Check if current directory is a git repository
+is_git_repo() {
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo -e "${RE}Error: Not a git repository!${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Check if branch exists
+branch_exists() {
+    local branch_name="$1"
+    if ! git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        echo -e "${RE}Error: Branch '$branch_name' does not exist!${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Check if remote exists
+remote_exists() {
+    local remote_name="$1"
+    if ! git remote | grep -q "^${remote_name}\$"; then
+        echo -e "${RE}Error: Remote '$remote_name' does not exist!${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Validate input is not empty
+validate_input() {
+    local input="$1"
+    local message="$2"
+    if [[ -z "$input" ]]; then
+        echo -e "${RE}Error: $message${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Check if there are uncommitted changes
+has_uncommitted_changes() {
+    if ! git diff-index --quiet HEAD --; then
+        return 0  # Has changes
+    fi
+    return 1  # No changes
+}
+
+# Show current branch
+show_current_branch() {
+    local branch=$(git branch --show-current)
+    echo -e "${BB}Current branch: ${YY}$branch${RT}"
+}
+
+# Show command help
+show_command_help() {
+    local command="$1"
+    local description="$2"
+    local usage="$3"
+    echo -e "${PP}Command:${RT} $command"
+    echo -e "${PP}Description:${RT} $description"
+    echo -e "${PP}Usage:${RT} $usage"
+}
+
+# Safe git execution with error handling
+safe_git_exec() {
+    if ! check_git; then
+        return 1
+    fi
+    if ! is_git_repo; then
+        return 1
+    fi
+    
+    if ! git "$@"; then
+        echo -e "${RE}Error: Git command failed: git $*${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Check if file is tracked by git
+is_file_tracked() {
+    local file="$1"
+    if ! git ls-files --error-unmatch "$file" &>/dev/null; then
+        echo -e "${RE}Error: File '$file' is not tracked by git${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Validate branch name
+validate_branch_name() {
+    local branch_name="$1"
+    if [[ ! "$branch_name" =~ ^[a-zA-Z0-9_/-]+$ ]]; then
+        echo -e "${RE}Error: Invalid branch name. Use only letters, numbers, underscores, and hyphens${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Show diff preview
+show_diff_preview() {
+    echo -e "${CY}Changes to be committed:${RT}"
+    git diff --cached --color
+}
+
+# Check repository state
+check_repo_state() {
+    if [[ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]]; then
+        echo -e "${YY}Warning: Repository is in merge state${RT}"
+        return 1
+    fi
+    if [[ -d "$(git rev-parse --git-dir)/rebase-apply" ]] || [[ -d "$(git rev-parse --git-dir)/rebase-merge" ]]; then
+        echo -e "${YY}Warning: Repository is in rebase state${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Progress indicator for long operations
+show_progress() {
+    local message="$1"
+    echo -ne "${BB}$message...${RT}\r"
+}
+
+# Success message
+show_success() {
+    local message="$1"
+    echo -e "${GG}Success: $message${RT}"
+}
+
+# Warning message
+show_warning() {
+    local message="$1"
+    echo -e "${YY}Warning: $message${RT}"
+}
+
+# Error message
+show_error() {
+    local message="$1"
+    echo -e "${RE}Error: $message${RT}"
+}
+
+# Info message
+show_info() {
+    local message="$1"
+    echo -e "${BB}Info: $message${RT}"
+}
+
+# Check if remote branch exists
+remote_branch_exists() {
+    local branch_name="$1"
+    local remote_name="${2:-origin}"
+    if ! git ls-remote --heads "$remote_name" "$branch_name" | grep -q "$branch_name"; then
+        echo -e "${RE}Error: Remote branch '$branch_name' does not exist on '$remote_name'${RT}"
+        return 1
+    fi
+    return 0
+}
+
+# Get repository root directory
+get_repo_root() {
+    git rev-parse --show-toplevel
+}
+
+# Check if commits exist to push
+has_unpushed_commits() {
+    local branch_name=$(git branch --show-current)
+    local remote_name="${1:-origin}"
+    if git rev-list HEAD..."$remote_name/$branch_name" --count 2>/dev/null | grep -q '^0$'; then
+        return 1  # No unpushed commits
+    fi
+    return 0  # Has unpushed commits
+} 

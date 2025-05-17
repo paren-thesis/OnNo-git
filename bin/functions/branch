@@ -1,10 +1,9 @@
 #!/bin/bash
 
-source /c/OnNo-git/bin/functions/utils/common.sh
 source /c/OnNo-git/bin/functions/utils/utils
 
 create_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the new branch: ${BB}" branch_name
     if ! validate_branch_name "$branch_name"; then
         return 1
@@ -15,7 +14,7 @@ create_branch() {
 
 # Function to delete a branch
 delete_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the branch to delete: ${BB}" branch_name
     if ! branch_exists "$branch_name"; then
         return 1
@@ -31,7 +30,7 @@ delete_branch() {
 
 # Function to merge a branch
 merge_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the branch to merge: ${BB}" branch_name
     if ! branch_exists "$branch_name"; then
         return 1
@@ -51,7 +50,7 @@ list_branches() {
 
 # Function to switch to a branch
 switch_branch() {
-    show_git_status
+    git_status
     if has_uncommitted_changes; then
         show_warning "You have uncommitted changes. Commit or stash them before switching branches."
         return 1
@@ -65,7 +64,7 @@ switch_branch() {
 }
 
 create_remote_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the new branch: ${BB}" branch_name
     if ! validate_branch_name "$branch_name"; then
         return 1
@@ -76,7 +75,7 @@ create_remote_branch() {
 }
 
 delete_remote_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the remote branch to delete: ${BB}" branch_name
     if ! remote_branch_exists "$branch_name"; then
         return 1
@@ -87,7 +86,7 @@ delete_remote_branch() {
 
 switch_remote_branch() {
     safe_git_exec fetch --all
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the remote branch to switch to: ${BB}" branch_name
     if ! remote_branch_exists "$branch_name"; then
         return 1
@@ -97,7 +96,7 @@ switch_remote_branch() {
 }
 
 rebase_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the branch to rebase onto: ${BB}" branch_name
     if ! branch_exists "$branch_name"; then
         return 1
@@ -110,7 +109,7 @@ rebase_branch() {
 }
 
 rename_branch() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the current name of the branch: ${BB}" old_name
     if ! branch_exists "$old_name"; then
         return 1
@@ -124,7 +123,7 @@ rename_branch() {
 }
 
 view_branch_history() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the name of the branch to view history: ${BB}" branch_name
     if ! branch_exists "$branch_name"; then
         return 1

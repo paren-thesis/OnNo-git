@@ -1,16 +1,11 @@
 #!/bin/bash
 
-source /c/OnNo-git/bin/functions/utils/common.sh
 source /c/OnNo-git/bin/functions/utils/utils
 
-# Display Git status
-git_status() {
-    show_git_status
-}
 
 # Commit with a message
 commit_with_message() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
@@ -23,7 +18,7 @@ commit_with_message() {
 
 # Amend the last commit
 amend_last_commit() {
-    show_git_status
+    git_status
     read -p "${GG}Are you sure you want to amend the last commit? (y/n): ${BB}" confirm
     if [[ $confirm == "y" || $confirm == "Y" ]]; then
         if ! safe_git_exec commit --amend; then
@@ -37,7 +32,7 @@ amend_last_commit() {
 
 # Commit specific files
 commit_specific_files() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the file name(s) to commit (space-separated): ${BB}" files
     read -p "${GG}Enter the commit message: ${BB}" message
 
@@ -64,7 +59,7 @@ commit_specific_files() {
 
 # Skip staging and commit directly
 skip_staging_and_commit() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
@@ -76,7 +71,7 @@ skip_staging_and_commit() {
 }
 
 commit_and_sign() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
@@ -88,7 +83,7 @@ commit_and_sign() {
 }
 
 commit_all_changes() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
@@ -111,7 +106,7 @@ empty_commit() {
 }
 
 commit_with_date() {
-    show_git_status
+    git_status
     read -p "${GG}Enter the commit message: ${BB}" message
     read -p "${GG}Enter the date (YYYY-MM-DD HH:MM:SS): ${BB}" date
     if ! validate_input "$message" "Commit message cannot be empty" || ! validate_input "$date" "Date cannot be empty"; then
