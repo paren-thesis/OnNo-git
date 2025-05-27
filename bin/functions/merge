@@ -1,3 +1,259 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic merge operations
+basic_merge() {
+    git_status
+    echo -e "${CY}Basic Merge Options:${RT}"
+    echo -e "${BB}1.${RT} Merge branch"
+    echo -e "${BB}2.${RT} Abort merge"
+    echo -e "${BB}3.${RT} Continue merge"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch name to merge: ${BB}" branch
+            safe_git_exec merge "$branch"
+            ;;
+        2)
+            safe_git_exec merge --abort
+            ;;
+        3)
+            safe_git_exec merge --continue
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle merge behavior options
+merge_behavior() {
+    git_status
+    echo -e "${CY}Merge Behavior Options:${RT}"
+    echo -e "${BB}1.${RT} No auto-commit"
+    echo -e "${BB}2.${RT} Squash merge"
+    echo -e "${BB}3.${RT} Force merge commit"
+    echo -e "${BB}4.${RT} Fast-forward only"
+    echo -e "${BB}5.${RT} Allow unrelated histories"
+    read -p "${GG}Select option: ${BB}" option
+
+    local behavior_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            behavior_opts="--no-commit $branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            behavior_opts="--squash $branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            behavior_opts="--no-ff $branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            behavior_opts="--ff-only $branch"
+            ;;
+        5)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            behavior_opts="--allow-unrelated-histories $branch"
+            ;;
+    esac
+
+    safe_git_exec merge $behavior_opts
+}
+
+# Function to handle conflict resolution options
+conflict_resolution() {
+    git_status
+    echo -e "${CY}Conflict Resolution Options:${RT}"
+    echo -e "${BB}1.${RT} Abort merge"
+    echo -e "${BB}2.${RT} Continue merge"
+    echo -e "${BB}3.${RT} Reuse recorded resolutions"
+    read -p "${GG}Select option: ${BB}" option
+
+    local conflict_opts=""
+    case $option in
+        1)
+            conflict_opts="--abort"
+            ;;
+        2)
+            conflict_opts="--continue"
+            ;;
+        3)
+            conflict_opts="--rerere-autoupdate"
+            ;;
+    esac
+
+    safe_git_exec merge $conflict_opts
+}
+
+# Function to handle commit customization
+commit_customization() {
+    git_status
+    echo -e "${CY}Commit Customization Options:${RT}"
+    echo -e "${BB}1.${RT} Set merge message"
+    echo -e "${BB}2.${RT} Edit commit message"
+    echo -e "${BB}3.${RT} Include commit summaries"
+    echo -e "${BB}4.${RT} Add signoff"
+    echo -e "${BB}5.${RT} GPG sign"
+    read -p "${GG}Select option: ${BB}" option
+
+    local commit_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            read -p "${GG}Enter merge message: ${BB}" message
+            commit_opts="-m '$message' $branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            commit_opts="-e $branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            read -p "${GG}Enter number of summaries: ${BB}" count
+            commit_opts="--log=$count $branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            commit_opts="--signoff $branch"
+            ;;
+        5)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            commit_opts="--gpg-sign $branch"
+            ;;
+    esac
+
+    safe_git_exec merge $commit_opts
+}
+
+# Function to handle output control
+output_control() {
+    git_status
+    echo -e "${CY}Output Control Options:${RT}"
+    echo -e "${BB}1.${RT} Show diffstat"
+    echo -e "${BB}2.${RT} Suppress diffstat"
+    echo -e "${BB}3.${RT} Verbose output"
+    echo -e "${BB}4.${RT} Quiet output"
+    read -p "${GG}Select option: ${BB}" option
+
+    local output_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            output_opts="--stat $branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            output_opts="--no-stat $branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            output_opts="--verbose $branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            output_opts="--quiet $branch"
+            ;;
+    esac
+
+    safe_git_exec merge $output_opts
+}
+
+# Function to handle merge strategies
+merge_strategy() {
+    git_status
+    echo -e "${CY}Merge Strategy Options:${RT}"
+    echo -e "${BB}1.${RT} Recursive strategy"
+    echo -e "${BB}2.${RT} Octopus strategy"
+    echo -e "${BB}3.${RT} Ours strategy"
+    echo -e "${BB}4.${RT} Theirs strategy"
+    echo -e "${BB}5.${RT} Ignore space changes"
+    read -p "${GG}Select option: ${BB}" option
+
+    local strategy_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            strategy_opts="-s recursive $branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            strategy_opts="-s octopus $branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            strategy_opts="-s recursive -X ours $branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            strategy_opts="-s recursive -X theirs $branch"
+            ;;
+        5)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            strategy_opts="-s recursive -X ignore-space-change $branch"
+            ;;
+    esac
+
+    safe_git_exec merge $strategy_opts
+}
+
+# Function to handle hooks and safety options
+hooks_safety() {
+    git_status
+    echo -e "${CY}Hooks and Safety Options:${RT}"
+    echo -e "${BB}1.${RT} Bypass hooks"
+    echo -e "${BB}2.${RT} Verify signatures"
+    echo -e "${BB}3.${RT} Auto stash"
+    read -p "${GG}Select option: ${BB}" option
+
+    local safety_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            safety_opts="--no-verify $branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            safety_opts="--verify-signatures $branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            safety_opts="--autostash $branch"
+            ;;
+    esac
+
+    safe_git_exec merge $safety_opts
+}
+
+# Main function to handle merge operations
+git_merge() {
+    echo -e "${CY}Git Merge Utility${RT}"
+    echo -e "${BB}1.${RT} Basic merge"
+    echo -e "${BB}2.${RT} Merge behavior"
+    echo -e "${BB}3.${RT} Conflict resolution"
+    echo -e "${BB}4.${RT} Commit customization"
+    echo -e "${BB}5.${RT} Output control"
+    echo -e "${BB}6.${RT} Merge strategy"
+    echo -e "${BB}7.${RT} Hooks and safety"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_merge ;;
+        2) merge_behavior ;;
+        3) conflict_resolution ;;
+        4) commit_customization ;;
+        5) output_control ;;
+        6) merge_strategy ;;
+        7) hooks_safety ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
