@@ -8,7 +8,38 @@ create_branch() {
     if ! validate_branch_name "$branch_name"; then
         return 1
     fi
-    safe_git_exec checkout -b "$branch_name"
+
+    # Additional options
+    echo -e "${CY}Additional Options:${RT}"
+    echo -e "${BB}1.${RT} Create with tracking"
+    echo -e "${BB}2.${RT} Create with force"
+    echo -e "${BB}3.${RT} Create with reflog"
+    echo -e "${BB}4.${RT} Create with description"
+    echo -e "${BB}5.${RT} Create with specific upstream"
+    read -p "${GG}Select option (press Enter for basic creation): ${BB}" option
+
+    local branch_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter upstream branch (e.g., origin/main): ${BB}" upstream
+            branch_opts="-t $upstream"
+            ;;
+        2)
+            branch_opts="-f"
+            ;;
+        3)
+            branch_opts="--create-reflog"
+            ;;
+        4)
+            branch_opts="--edit-description"
+            ;;
+        5)
+            read -p "${GG}Enter upstream branch: ${BB}" upstream
+            branch_opts="-u $upstream"
+            ;;
+    esac
+
+    safe_git_exec checkout -b "$branch_name" $branch_opts
     show_success "Branch '$branch_name' created successfully!"
 }
 
@@ -19,12 +50,29 @@ delete_branch() {
     if ! branch_exists "$branch_name"; then
         return 1
     fi
-    read -p "${GG}Force delete unmerged branch? (y/n): ${BB}" force
-    if [[ $force == "y" || $force == "Y" ]]; then
-        safe_git_exec branch -D "$branch_name"
-    else
-        safe_git_exec branch -d "$branch_name"
-    fi
+
+    echo -e "${CY}Delete Options:${RT}"
+    echo -e "${BB}1.${RT} Safe delete (only if merged)"
+    echo -e "${BB}2.${RT} Force delete"
+    echo -e "${BB}3.${RT} Delete with upstream removal"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec branch -d "$branch_name"
+            ;;
+        2)
+            safe_git_exec branch -D "$branch_name"
+            ;;
+        3)
+            safe_git_exec branch -d "$branch_name"
+            safe_git_exec branch --unset-upstream "$branch_name"
+            ;;
+        *)
+            show_error "Invalid option"
+            return 1
+            ;;
+    esac
     show_success "Branch '$branch_name' deleted successfully!"
 }
 
@@ -35,7 +83,20 @@ merge_branch() {
     if ! branch_exists "$branch_name"; then
         return 1
     fi
-    if ! safe_git_exec merge "$branch_name"; then
+
+    echo -e "${CY}Merge Options:${RT}"
+    echo -e "${BB}1.${RT} Standard merge"
+    echo -e "${BB}2.${RT} Merge with verbose output"
+    echo -e "${BB}3.${RT} Merge with quiet mode"
+    read -p "${GG}Select option: ${BB}" option
+
+    local merge_opts=""
+    case $option in
+        2) merge_opts="-v" ;;
+        3) merge_opts="-q" ;;
+    esac
+
+    if ! safe_git_exec merge $merge_opts "$branch_name"; then
         show_error "Merge conflict detected! Resolve conflicts and commit the changes."
         return 1
     fi
@@ -44,8 +105,33 @@ merge_branch() {
 
 # Function to list all branches
 list_branches() {
-    echo -e "${CY}Listing all branches:${RT}"
-    safe_git_exec branch
+    echo -e "${CY}Listing Options:${RT}"
+    echo -e "${BB}1.${RT} List local branches"
+    echo -e "${BB}2.${RT} List all branches (local and remote)"
+    echo -e "${BB}3.${RT} List with merged status"
+    echo -e "${BB}4.${RT} List with custom format"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec branch --list
+            ;;
+        2)
+            safe_git_exec branch -a
+            ;;
+        3)
+            read -p "${GG}Enter commit to check against (default: HEAD): ${BB}" commit
+            commit=${commit:-HEAD}
+            safe_git_exec branch --merged "$commit"
+            safe_git_exec branch --no-merged "$commit"
+            ;;
+        4)
+            safe_git_exec branch --format="%(refname:short) - %(committerdate:relative)"
+            ;;
+        *)
+            safe_git_exec branch
+            ;;
+    esac
 }
 
 # Function to switch to a branch
@@ -55,11 +141,30 @@ switch_branch() {
         show_warning "You have uncommitted changes. Commit or stash them before switching branches."
         return 1
     fi
+
+    echo -e "${CY}Switch Options:${RT}"
+    echo -e "${BB}1.${RT} Basic switch"
+    echo -e "${BB}2.${RT} Switch with tracking"
+    echo -e "${BB}3.${RT} Switch with force"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Enter the name of the branch to switch to: ${BB}" branch_name
     if ! branch_exists "$branch_name"; then
         return 1
     fi
-    safe_git_exec checkout "$branch_name"
+
+    local switch_opts=""
+    case $option in
+        2)
+            read -p "${GG}Enter upstream branch: ${BB}" upstream
+            switch_opts="-t $upstream"
+            ;;
+        3)
+            switch_opts="-f"
+            ;;
+    esac
+
+    safe_git_exec checkout $switch_opts "$branch_name"
     show_success "Switched to branch '$branch_name' successfully!"
 }
 
@@ -69,8 +174,25 @@ create_remote_branch() {
     if ! validate_branch_name "$branch_name"; then
         return 1
     fi
+
+    echo -e "${CY}Remote Branch Options:${RT}"
+    echo -e "${BB}1.${RT} Basic remote branch"
+    echo -e "${BB}2.${RT} With force"
+    echo -e "${BB}3.${RT} With tracking"
+    read -p "${GG}Select option: ${BB}" option
+
+    local remote_opts=""
+    case $option in
+        2)
+            remote_opts="-f"
+            ;;
+        3)
+            remote_opts="-u origin/$branch_name"
+            ;;
+    esac
+
     safe_git_exec checkout -b "$branch_name"
-    safe_git_exec push -u origin "$branch_name"
+    safe_git_exec push $remote_opts origin "$branch_name"
     show_success "Remote branch '$branch_name' created and pushed successfully!"
 }
 
@@ -80,7 +202,24 @@ delete_remote_branch() {
     if ! remote_branch_exists "$branch_name"; then
         return 1
     fi
-    safe_git_exec push origin --delete "$branch_name"
+
+    echo -e "${CY}Delete Options:${RT}"
+    echo -e "${BB}1.${RT} Standard delete"
+    echo -e "${BB}2.${RT} Delete with upstream removal"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push origin --delete "$branch_name"
+            ;;
+        2)
+            safe_git_exec push origin --delete "$branch_name"
+            safe_git_exec branch --unset-upstream "$branch_name"
+            ;;
+        *)
+            safe_git_exec push origin --delete "$branch_name"
+            ;;
+    esac
     show_success "Remote branch '$branch_name' deleted successfully!"
 }
 
@@ -91,7 +230,24 @@ switch_remote_branch() {
     if ! remote_branch_exists "$branch_name"; then
         return 1
     fi
-    safe_git_exec checkout -b "$branch_name" "origin/$branch_name"
+
+    echo -e "${CY}Switch Options:${RT}"
+    echo -e "${BB}1.${RT} Basic switch"
+    echo -e "${BB}2.${RT} Switch with tracking"
+    echo -e "${BB}3.${RT} Switch with force"
+    read -p "${GG}Select option: ${BB}" option
+
+    local switch_opts=""
+    case $option in
+        2)
+            switch_opts="-t origin/$branch_name"
+            ;;
+        3)
+            switch_opts="-f"
+            ;;
+    esac
+
+    safe_git_exec checkout -b "$branch_name" $switch_opts "origin/$branch_name"
     show_success "Switched to remote branch '$branch_name' successfully!"
 }
 
@@ -101,7 +257,20 @@ rebase_branch() {
     if ! branch_exists "$branch_name"; then
         return 1
     fi
-    if ! safe_git_exec rebase "$branch_name"; then
+
+    echo -e "${CY}Rebase Options:${RT}"
+    echo -e "${BB}1.${RT} Standard rebase"
+    echo -e "${BB}2.${RT} Rebase with verbose output"
+    echo -e "${BB}3.${RT} Rebase with quiet mode"
+    read -p "${GG}Select option: ${BB}" option
+
+    local rebase_opts=""
+    case $option in
+        2) rebase_opts="-v" ;;
+        3) rebase_opts="-q" ;;
+    esac
+
+    if ! safe_git_exec rebase $rebase_opts "$branch_name"; then
         show_error "Rebase failed. Resolve conflicts and run 'git rebase --continue'"
         return 1
     fi
@@ -118,7 +287,23 @@ rename_branch() {
     if ! validate_branch_name "$new_name"; then
         return 1
     fi
-    safe_git_exec branch -m "$old_name" "$new_name"
+
+    echo -e "${CY}Rename Options:${RT}"
+    echo -e "${BB}1.${RT} Safe rename"
+    echo -e "${BB}2.${RT} Force rename"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec branch -m "$old_name" "$new_name"
+            ;;
+        2)
+            safe_git_exec branch -M "$old_name" "$new_name"
+            ;;
+        *)
+            safe_git_exec branch -m "$old_name" "$new_name"
+            ;;
+    esac
     show_success "Branch renamed from '$old_name' to '$new_name' successfully!"
 }
 
@@ -128,6 +313,328 @@ view_branch_history() {
     if ! branch_exists "$branch_name"; then
         return 1
     fi
-    echo -e "${CY}Commit history for branch '$branch_name':${RT}"
-    safe_git_exec log "$branch_name" --oneline
+
+    echo -e "${CY}History Options:${RT}"
+    echo -e "${BB}1.${RT} Basic history"
+    echo -e "${BB}2.${RT} Detailed history"
+    echo -e "${BB}3.${RT} History with custom format"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec log "$branch_name" --oneline
+            ;;
+        2)
+            safe_git_exec log "$branch_name" --graph --oneline --decorate
+            ;;
+        3)
+            safe_git_exec log "$branch_name" --format="%h - %an, %ar : %s"
+            ;;
+        *)
+            safe_git_exec log "$branch_name" --oneline
+            ;;
+    esac
+}
+
+# Function to show branch details
+show_branch_details() {
+    git_status
+    read -p "${GG}Enter the name of the branch to show details: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+
+    echo -e "${CY}Branch Details for '$branch_name':${RT}"
+    echo -e "${BB}1.${RT} Basic details"
+    echo -e "${BB}2.${RT} Detailed information"
+    echo -e "${BB}3.${RT} Upstream information"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec branch -v "$branch_name"
+            ;;
+        2)
+            safe_git_exec branch -vv "$branch_name"
+            safe_git_exec log -1 "$branch_name" --format="%h - %an, %ar : %s"
+            ;;
+        3)
+            safe_git_exec branch -vv "$branch_name"
+            safe_git_exec rev-parse --abbrev-ref "$branch_name@{upstream}" 2>/dev/null || echo "No upstream branch"
+            ;;
+        *)
+            safe_git_exec branch -v "$branch_name"
+            ;;
+    esac
+}
+
+# Function to compare branches
+compare_branches() {
+    git_status
+    read -p "${GG}Enter the first branch to compare: ${BB}" branch1
+    if ! branch_exists "$branch1"; then
+        return 1
+    fi
+
+    read -p "${GG}Enter the second branch to compare: ${BB}" branch2
+    if ! branch_exists "$branch2"; then
+        return 1
+    fi
+
+    echo -e "${CY}Compare Options:${RT}"
+    echo -e "${BB}1.${RT} Show commits in branch1 not in branch2"
+    echo -e "${BB}2.${RT} Show commits in branch2 not in branch1"
+    echo -e "${BB}3.${RT} Show all differences"
+    echo -e "${BB}4.${RT} Show file differences"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec log "$branch1" --not "$branch2" --oneline
+            ;;
+        2)
+            safe_git_exec log "$branch2" --not "$branch1" --oneline
+            ;;
+        3)
+            safe_git_exec log "$branch1"..."$branch2" --oneline
+            ;;
+        4)
+            safe_git_exec diff "$branch1"..."$branch2" --name-status
+            ;;
+        *)
+            safe_git_exec log "$branch1"..."$branch2" --oneline
+            ;;
+    esac
+}
+
+# Function to clean up branches
+cleanup_branches() {
+    git_status
+    echo -e "${CY}Cleanup Options:${RT}"
+    echo -e "${BB}1.${RT} Delete merged branches"
+    echo -e "${BB}2.${RT} Delete stale remote branches"
+    echo -e "${BB}3.${RT} Prune remote branches"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            echo -e "${CY}Deleting merged branches...${RT}"
+            safe_git_exec branch --merged | grep -v "\*" | xargs -n 1 git branch -d
+            ;;
+        2)
+            echo -e "${CY}Deleting stale remote branches...${RT}"
+            safe_git_exec remote prune origin
+            ;;
+        3)
+            echo -e "${CY}Pruning remote branches...${RT}"
+            safe_git_exec fetch --prune
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Cleanup completed successfully!"
+}
+
+# Function to manage branch protection
+protect_branch() {
+    git_status
+    read -p "${GG}Enter the name of the branch to protect: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+
+    echo -e "${CY}Protection Options:${RT}"
+    echo -e "${BB}1.${RT} Prevent direct pushes"
+    echo -e "${BB}2.${RT} Require pull request reviews"
+    echo -e "${BB}3.${RT} Require status checks"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec config branch."$branch_name".pushRemote no_push
+            ;;
+        2)
+            safe_git_exec config branch."$branch_name".requirePullRequest true
+            ;;
+        3)
+            safe_git_exec config branch."$branch_name".requireStatusChecks true
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Branch protection configured successfully!"
+}
+
+# Function to manage branch descriptions
+manage_branch_description() {
+    git_status
+    read -p "${GG}Enter the name of the branch: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+
+    echo -e "${CY}Description Options:${RT}"
+    echo -e "${BB}1.${RT} View description"
+    echo -e "${BB}2.${RT} Edit description"
+    echo -e "${BB}3.${RT} Remove description"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec config branch."$branch_name".description
+            ;;
+        2)
+            read -p "${GG}Enter new description: ${BB}" description
+            safe_git_exec config branch."$branch_name".description "$description"
+            ;;
+        3)
+            safe_git_exec config --unset branch."$branch_name".description
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Branch description updated successfully!"
+}
+
+# Function to manage branch aliases
+manage_branch_alias() {
+    git_status
+    echo -e "${CY}Alias Options:${RT}"
+    echo -e "${BB}1.${RT} Create alias"
+    echo -e "${BB}2.${RT} List aliases"
+    echo -e "${BB}3.${RT} Remove alias"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch_name
+            if ! branch_exists "$branch_name"; then
+                return 1
+            fi
+            read -p "${GG}Enter alias name: ${BB}" alias_name
+            safe_git_exec config branch."$branch_name".alias "$alias_name"
+            ;;
+        2)
+            safe_git_exec config --get-regexp branch.*.alias
+            ;;
+        3)
+            read -p "${GG}Enter branch name: ${BB}" branch_name
+            safe_git_exec config --unset branch."$branch_name".alias
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Branch alias operation completed successfully!"
+}
+
+# Function to manage branch notes
+manage_branch_notes() {
+    git_status
+    read -p "${GG}Enter the name of the branch: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+
+    echo -e "${CY}Notes Options:${RT}"
+    echo -e "${BB}1.${RT} Add note"
+    echo -e "${BB}2.${RT} View notes"
+    echo -e "${BB}3.${RT} Remove note"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter note: ${BB}" note
+            safe_git_exec notes add -m "$note" "$branch_name"
+            ;;
+        2)
+            safe_git_exec notes show "$branch_name"
+            ;;
+        3)
+            safe_git_exec notes remove "$branch_name"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Branch notes operation completed successfully!"
+}
+
+# Function to manage branch tags
+manage_branch_tags() {
+    git_status
+    read -p "${GG}Enter the name of the branch: ${BB}" branch_name
+    if ! branch_exists "$branch_name"; then
+        return 1
+    fi
+
+    echo -e "${CY}Tag Options:${RT}"
+    echo -e "${BB}1.${RT} List tags"
+    echo -e "${BB}2.${RT} Create tag"
+    echo -e "${BB}3.${RT} Delete tag"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec tag -l
+            ;;
+        2)
+            read -p "${GG}Enter tag name: ${BB}" tag_name
+            read -p "${GG}Enter tag message: ${BB}" tag_message
+            safe_git_exec tag -a "$tag_name" -m "$tag_message" "$branch_name"
+            ;;
+        3)
+            read -p "${GG}Enter tag name to delete: ${BB}" tag_name
+            safe_git_exec tag -d "$tag_name"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Tag operation completed successfully!"
+}
+
+# Function to manage branch stashes
+manage_branch_stashes() {
+    git_status
+    echo -e "${CY}Stash Options:${RT}"
+    echo -e "${BB}1.${RT} List stashes"
+    echo -e "${BB}2.${RT} Create stash"
+    echo -e "${BB}3.${RT} Apply stash"
+    echo -e "${BB}4.${RT} Drop stash"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec stash list
+            ;;
+        2)
+            read -p "${GG}Enter stash message: ${BB}" stash_message
+            safe_git_exec stash push -m "$stash_message"
+            ;;
+        3)
+            safe_git_exec stash list
+            read -p "${GG}Enter stash index to apply: ${BB}" stash_index
+            safe_git_exec stash apply "stash@{$stash_index}"
+            ;;
+        4)
+            safe_git_exec stash list
+            read -p "${GG}Enter stash index to drop: ${BB}" stash_index
+            safe_git_exec stash drop "stash@{$stash_index}"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+    show_success "Stash operation completed successfully!"
 }
