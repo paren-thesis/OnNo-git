@@ -1,1 +1,211 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to clone a repository with various options
+clone_repository() {
+    echo -e "${CY}Git Clone Options:${RT}"
+    echo -e "${BB}1.${RT} Basic clone"
+    echo -e "${BB}2.${RT} Clone with specific branch"
+    echo -e "${BB}3.${RT} Shallow clone"
+    echo -e "${BB}4.${RT} Partial clone (save space)"
+    echo -e "${BB}5.${RT} Bare/Mirror clone"
+    echo -e "${BB}6.${RT} Clone with submodules"
+    echo -e "${BB}7.${RT} Custom remote name"
+    echo -e "${BB}8.${RT} Sparse checkout"
+    echo -e "${BB}9.${RT} Advanced options"
+    read -p "${GG}Select clone type: ${BB}" clone_type
+
+    read -p "${GG}Enter repository URL: ${BB}" repo_url
+    read -p "${GG}Enter target directory (press Enter to use default): ${BB}" target_dir
+
+    local clone_opts=""
+    local additional_opts=""
+
+    case $clone_type in
+        1) # Basic clone
+            clone_opts=""
+            ;;
+        2) # Clone with specific branch
+            read -p "${GG}Enter branch name: ${BB}" branch_name
+            clone_opts="-b $branch_name"
+            ;;
+        3) # Shallow clone
+            read -p "${GG}Enter depth (number of commits): ${BB}" depth
+            clone_opts="--depth=$depth"
+            ;;
+        4) # Partial clone
+            echo -e "${CY}Partial Clone Options:${RT}"
+            echo -e "${BB}1.${RT} Exclude blobs (--filter=blob:none)"
+            echo -e "${BB}2.${RT} Exclude trees (--filter=tree:none)"
+            echo -e "${BB}3.${RT} Custom filter"
+            read -p "${GG}Select filter type: ${BB}" filter_type
+            case $filter_type in
+                1) clone_opts="--filter=blob:none" ;;
+                2) clone_opts="--filter=tree:none" ;;
+                3)
+                    read -p "${GG}Enter custom filter: ${BB}" custom_filter
+                    clone_opts="--filter=$custom_filter"
+                    ;;
+            esac
+            ;;
+        5) # Bare/Mirror clone
+            echo -e "${CY}Bare/Mirror Options:${RT}"
+            echo -e "${BB}1.${RT} Bare clone (--bare)"
+            echo -e "${BB}2.${RT} Mirror clone (--mirror)"
+            read -p "${GG}Select type: ${BB}" bare_type
+            case $bare_type in
+                1) clone_opts="--bare" ;;
+                2) clone_opts="--mirror" ;;
+            esac
+            ;;
+        6) # Clone with submodules
+            echo -e "${CY}Submodule Options:${RT}"
+            echo -e "${BB}1.${RT} Basic submodule clone"
+            echo -e "${BB}2.${RT} Parallel submodule clone"
+            echo -e "${BB}3.${RT} Shallow submodule clone"
+            read -p "${GG}Select submodule option: ${BB}" submodule_type
+            case $submodule_type in
+                1) clone_opts="--recurse-submodules" ;;
+                2)
+                    read -p "${GG}Enter number of parallel jobs: ${BB}" jobs
+                    clone_opts="--recurse-submodules -j$jobs"
+                    ;;
+                3) clone_opts="--recurse-submodules --shallow-submodules" ;;
+            esac
+            ;;
+        7) # Custom remote name
+            read -p "${GG}Enter custom remote name: ${BB}" remote_name
+            clone_opts="-o $remote_name"
+            ;;
+        8) # Sparse checkout
+            clone_opts="--sparse"
+            ;;
+        9) # Advanced options
+            echo -e "${CY}Advanced Options:${RT}"
+            echo -e "${BB}1.${RT} No checkout"
+            echo -e "${BB}2.${RT} No tags"
+            echo -e "${BB}3.${RT} Local optimization"
+            echo -e "${BB}4.${RT} Reference repository"
+            echo -e "${BB}5.${RT} Custom configuration"
+            read -p "${GG}Select advanced option: ${BB}" advanced_type
+            case $advanced_type in
+                1) clone_opts="-n" ;;
+                2) clone_opts="--no-tags" ;;
+                3) clone_opts="-l" ;;
+                4)
+                    read -p "${GG}Enter reference repository path: ${BB}" ref_repo
+                    clone_opts="--reference $ref_repo"
+                    ;;
+                5)
+                    read -p "${GG}Enter config key: ${BB}" config_key
+                    read -p "${GG}Enter config value: ${BB}" config_value
+                    clone_opts="-c $config_key=$config_value"
+                    ;;
+            esac
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    # Additional options
+    echo -e "${CY}Additional Options:${RT}"
+    echo -e "${BB}1.${RT} Verbose output"
+    echo -e "${BB}2.${RT} Quiet mode"
+    echo -e "${BB}3.${RT} Force progress"
+    echo -e "${BB}4.${RT} IPv4 only"
+    echo -e "${BB}5.${RT} IPv6 only"
+    echo -e "${BB}6.${RT} None"
+    read -p "${GG}Select additional option: ${BB}" additional_type
+    case $additional_type in
+        1) additional_opts="-v" ;;
+        2) additional_opts="-q" ;;
+        3) additional_opts="--progress" ;;
+        4) additional_opts="-4" ;;
+        5) additional_opts="-6" ;;
+    esac
+
+    # Construct the final command
+    local cmd="git clone $clone_opts $additional_opts $repo_url"
+    if [ ! -z "$target_dir" ]; then
+        cmd="$cmd $target_dir"
+    fi
+
+    echo -e "${CY}Executing: $cmd${RT}"
+    if ! safe_git_exec clone $clone_opts $additional_opts "$repo_url" $target_dir; then
+        show_error "Failed to clone repository"
+        return 1
+    fi
+
+    show_success "Repository cloned successfully!"
+
+    # Post-clone operations
+    if [ "$clone_type" = "8" ]; then
+        echo -e "${CY}Configure sparse checkout:${RT}"
+        read -p "${GG}Enter paths to checkout (space-separated): ${BB}" sparse_paths
+        if [ ! -z "$sparse_paths" ]; then
+            cd "$target_dir" || return 1
+            safe_git_exec sparse-checkout set $sparse_paths
+            show_success "Sparse checkout configured successfully!"
+        fi
+    fi
+}
+
+# Function to validate repository URL
+validate_repo_url() {
+    local url=$1
+    if [[ $url =~ ^(https?|git|ssh):// ]]; then
+        return 0
+    elif [[ $url =~ ^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+:[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to check if directory exists and is empty
+check_directory() {
+    local dir=$1
+    if [ -d "$dir" ] && [ "$(ls -A $dir)" ]; then
+        return 1
+    fi
+    return 0
+}
+
+# Main function to handle cloning
+git_clone() {
+    echo -e "${CY}Git Clone Utility${RT}"
+    echo -e "${BB}1.${RT} Clone repository"
+    echo -e "${BB}2.${RT} Validate repository URL"
+    echo -e "${BB}3.${RT} Check directory"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1)
+            clone_repository
+            ;;
+        2)
+            read -p "${GG}Enter repository URL to validate: ${BB}" url
+            if validate_repo_url "$url"; then
+                show_success "Valid repository URL"
+            else
+                show_error "Invalid repository URL"
+            fi
+            ;;
+        3)
+            read -p "${GG}Enter directory path to check: ${BB}" dir
+            if check_directory "$dir"; then
+                show_success "Directory is empty or does not exist"
+            else
+                show_error "Directory exists and is not empty"
+            fi
+            ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
+
