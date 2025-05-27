@@ -1,3 +1,201 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic repository initialization
+basic_init() {
+    git_status
+    echo -e "${CY}Basic Initialization Options:${RT}"
+    echo -e "${BB}1.${RT} Initialize in current directory"
+    echo -e "${BB}2.${RT} Initialize in specific directory"
+    echo -e "${BB}3.${RT} Initialize bare repository"
+    read -p "${GG}Select option: ${BB}" option
+
+    local init_opts=""
+    case $option in
+        1)
+            safe_git_exec init
+            ;;
+        2)
+            read -p "${GG}Enter directory path: ${BB}" dir
+            if [ ! -d "$dir" ]; then
+                mkdir -p "$dir"
+            fi
+            safe_git_exec init "$dir"
+            ;;
+        3)
+            safe_git_exec init --bare
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle template options
+template_init() {
+    git_status
+    echo -e "${CY}Template Options:${RT}"
+    echo -e "${BB}1.${RT} Use default template"
+    echo -e "${BB}2.${RT} Use custom template"
+    echo -e "${BB}3.${RT} No template"
+    read -p "${GG}Select option: ${BB}" option
+
+    local template_opts=""
+    case $option in
+        1)
+            template_opts="--template"
+            ;;
+        2)
+            read -p "${GG}Enter template directory path: ${BB}" template_dir
+            template_opts="--template=$template_dir"
+            ;;
+        3)
+            template_opts="--no-template"
+            ;;
+    esac
+
+    safe_git_exec init $template_opts
+}
+
+# Function to handle shared repository options
+shared_init() {
+    git_status
+    echo -e "${CY}Shared Repository Options:${RT}"
+    echo -e "${BB}1.${RT} Default shared permissions"
+    echo -e "${BB}2.${RT} Custom shared permissions"
+    echo -e "${BB}3.${RT} No sharing"
+    read -p "${GG}Select option: ${BB}" option
+
+    local shared_opts=""
+    case $option in
+        1)
+            shared_opts="--shared"
+            ;;
+        2)
+            read -p "${GG}Enter permissions (group|all|world|everybody|umask): ${BB}" perms
+            shared_opts="--shared=$perms"
+            ;;
+        3)
+            shared_opts="--no-shared"
+            ;;
+    esac
+
+    safe_git_exec init $shared_opts
+}
+
+# Function to handle separate git directory
+separate_git_dir() {
+    git_status
+    echo -e "${CY}Separate Git Directory Options:${RT}"
+    echo -e "${BB}1.${RT} Set separate git directory"
+    echo -e "${BB}2.${RT} No separate git directory"
+    read -p "${GG}Select option: ${BB}" option
+
+    local dir_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter git directory path: ${BB}" git_dir
+            dir_opts="--separate-git-dir=$git_dir"
+            ;;
+        2)
+            dir_opts="--no-separate-git-dir"
+            ;;
+    esac
+
+    safe_git_exec init $dir_opts
+}
+
+# Function to handle initial branch options
+initial_branch() {
+    git_status
+    echo -e "${CY}Initial Branch Options:${RT}"
+    echo -e "${BB}1.${RT} Set initial branch name"
+    echo -e "${BB}2.${RT} Use default branch name"
+    read -p "${GG}Select option: ${BB}" option
+
+    local branch_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter initial branch name: ${BB}" branch_name
+            branch_opts="-b $branch_name"
+            ;;
+        2)
+            branch_opts="--no-initial-branch"
+            ;;
+    esac
+
+    safe_git_exec init $branch_opts
+}
+
+# Function to handle object format options
+object_format() {
+    git_status
+    echo -e "${CY}Object Format Options:${RT}"
+    echo -e "${BB}1.${RT} Set object format"
+    echo -e "${BB}2.${RT} Use default format"
+    read -p "${GG}Select option: ${BB}" option
+
+    local format_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter object format (sha1|sha256): ${BB}" format
+            format_opts="--object-format=$format"
+            ;;
+        2)
+            format_opts="--no-object-format"
+            ;;
+    esac
+
+    safe_git_exec init $format_opts
+}
+
+# Function to handle reference format options
+ref_format() {
+    git_status
+    echo -e "${CY}Reference Format Options:${RT}"
+    echo -e "${BB}1.${RT} Set reference format"
+    echo -e "${BB}2.${RT} Use default format"
+    read -p "${GG}Select option: ${BB}" option
+
+    local ref_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter reference format: ${BB}" format
+            ref_opts="--ref-format=$format"
+            ;;
+        2)
+            ref_opts="--no-ref-format"
+            ;;
+    esac
+
+    safe_git_exec init $ref_opts
+}
+
+# Main function to handle init operations
+git_init() {
+    echo -e "${CY}Git Init Utility${RT}"
+    echo -e "${BB}1.${RT} Basic initialization"
+    echo -e "${BB}2.${RT} Template options"
+    echo -e "${BB}3.${RT} Shared repository"
+    echo -e "${BB}4.${RT} Separate git directory"
+    echo -e "${BB}5.${RT} Initial branch"
+    echo -e "${BB}6.${RT} Object format"
+    echo -e "${BB}7.${RT} Reference format"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_init ;;
+        2) template_init ;;
+        3) shared_init ;;
+        4) separate_git_dir ;;
+        5) initial_branch ;;
+        6) object_format ;;
+        7) ref_format ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
