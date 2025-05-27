@@ -1,3 +1,249 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic rebase operations
+basic_rebase() {
+    git_status
+    echo -e "${CY}Basic Rebase Options:${RT}"
+    echo -e "${BB}1.${RT} Rebase onto branch"
+    echo -e "${BB}2.${RT} Interactive rebase"
+    echo -e "${BB}3.${RT} Rebase onto specific commit"
+    echo -e "${BB}4.${RT} Rebase from root"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch name to rebase onto: ${BB}" branch
+            safe_git_exec rebase "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter number of commits to rebase (e.g., 3): ${BB}" count
+            safe_git_exec rebase -i "HEAD~$count"
+            ;;
+        3)
+            read -p "${GG}Enter commit hash to rebase onto: ${BB}" commit
+            safe_git_exec rebase "$commit"
+            ;;
+        4)
+            safe_git_exec rebase --root
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle conflict resolution
+conflict_resolution() {
+    git_status
+    echo -e "${CY}Conflict Resolution Options:${RT}"
+    echo -e "${BB}1.${RT} Continue rebase"
+    echo -e "${BB}2.${RT} Skip current commit"
+    echo -e "${BB}3.${RT} Abort rebase"
+    echo -e "${BB}4.${RT} Quit rebase"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec rebase --continue
+            ;;
+        2)
+            safe_git_exec rebase --skip
+            ;;
+        3)
+            safe_git_exec rebase --abort
+            ;;
+        4)
+            safe_git_exec rebase --quit
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle commit management
+commit_management() {
+    git_status
+    echo -e "${CY}Commit Management Options:${RT}"
+    echo -e "${BB}1.${RT} Auto-squash commits"
+    echo -e "${BB}2.${RT} Handle empty commits"
+    echo -e "${BB}3.${RT} Update refs"
+    echo -e "${BB}4.${RT} Execute command after each commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase -i --autosquash "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter empty commit handling (drop/keep/stop): ${BB}" empty
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --empty="$empty" "$branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --update-refs "$branch"
+            ;;
+        4)
+            read -p "${GG}Enter command to execute: ${BB}" cmd
+            read -p "${GG}Enter number of commits to rebase: ${BB}" count
+            safe_git_exec rebase -i -x "$cmd" "HEAD~$count"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle merge strategies
+merge_strategy() {
+    git_status
+    echo -e "${CY}Merge Strategy Options:${RT}"
+    echo -e "${BB}1.${RT} Use merge strategy"
+    echo -e "${BB}2.${RT} Use strategy option"
+    echo -e "${BB}3.${RT} Preserve merge commits"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter strategy (ort/recursive): ${BB}" strategy
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase -s "$strategy" "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter strategy option (e.g., theirs): ${BB}" option
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase -X "$option" "$branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase -r "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle output and safety options
+output_safety() {
+    git_status
+    echo -e "${CY}Output and Safety Options:${RT}"
+    echo -e "${BB}1.${RT} Bypass hooks"
+    echo -e "${BB}2.${RT} Show diffstat"
+    echo -e "${BB}3.${RT} Suppress diffstat"
+    echo -e "${BB}4.${RT} Auto-stash changes"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --no-verify "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --stat "$branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --no-stat "$branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --autostash "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle commit metadata
+commit_metadata() {
+    git_status
+    echo -e "${CY}Commit Metadata Options:${RT}"
+    echo -e "${BB}1.${RT} Add signoff"
+    echo -e "${BB}2.${RT} Keep original timestamps"
+    echo -e "${BB}3.${RT} Reset author date"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --signoff "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --committer-date-is-author-date "$branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --reset-author-date "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle onto rebase
+onto_rebase() {
+    git_status
+    echo -e "${CY}Onto Rebase Options:${RT}"
+    echo -e "${BB}1.${RT} Rebase onto new base"
+    echo -e "${BB}2.${RT} Keep base"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter new base: ${BB}" newbase
+            read -p "${GG}Enter old base: ${BB}" oldbase
+            read -p "${GG}Enter branch to rebase: ${BB}" branch
+            safe_git_exec rebase --onto "$newbase" "$oldbase" "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch to rebase onto: ${BB}" branch
+            safe_git_exec rebase --keep-base "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle rebase operations
+git_rebase() {
+    echo -e "${CY}Git Rebase Utility${RT}"
+    echo -e "${BB}1.${RT} Basic rebase"
+    echo -e "${BB}2.${RT} Conflict resolution"
+    echo -e "${BB}3.${RT} Commit management"
+    echo -e "${BB}4.${RT} Merge strategy"
+    echo -e "${BB}5.${RT} Output and safety"
+    echo -e "${BB}6.${RT} Commit metadata"
+    echo -e "${BB}7.${RT} Onto rebase"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_rebase ;;
+        2) conflict_resolution ;;
+        3) commit_management ;;
+        4) merge_strategy ;;
+        5) output_safety ;;
+        6) commit_metadata ;;
+        7) onto_rebase ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
