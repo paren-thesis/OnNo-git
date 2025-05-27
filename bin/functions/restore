@@ -2,4 +2,137 @@
 
 source /c/OnNo-git/bin/functions/utils/utils
 
+# Function to handle basic restore operations
+basic_restore() {
+    git_status
+    echo -e "${CY}Basic Restore Options:${RT}"
+    echo -e "${BB}1.${RT} Discard unstaged changes (working directory)"
+    echo -e "${BB}2.${RT} Unstage files (staging area)"
+    echo -e "${BB}3.${RT} Restore from specific commit/branch"
+    echo -e "${BB}4.${RT} Discard both unstaged and staged changes"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter file/directory to restore (default: .): ${BB}" path
+            path=${path:-.}
+            safe_git_exec restore "$path"
+            ;;
+        2)
+            read -p "${GG}Enter file to unstage: ${BB}" file
+            safe_git_exec restore --staged "$file"
+            ;;
+        3)
+            read -p "${GG}Enter source (commit/branch): ${BB}" source
+            read -p "${GG}Enter file to restore: ${BB}" file
+            safe_git_exec restore --source="$source" "$file"
+            ;;
+        4)
+            read -p "${GG}Enter file to restore: ${BB}" file
+            safe_git_exec restore --staged --worktree "$file"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle interactive and conflict resolution
+interactive_conflict_restore() {
+    git_status
+    echo -e "${CY}Interactive/Conflict Options:${RT}"
+    echo -e "${BB}1.${RT} Interactive patch restore (-p)"
+    echo -e "${BB}2.${RT} Use 'our' version in conflict"
+    echo -e "${BB}3.${RT} Use 'their' version in conflict"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec restore -p
+            ;;
+        2)
+            read -p "${GG}Enter file in conflict: ${BB}" file
+            safe_git_exec restore --ours "$file"
+            ;;
+        3)
+            read -p "${GG}Enter file in conflict: ${BB}" file
+            safe_git_exec restore --theirs "$file"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle overlay and untracked files
+overlay_untracked_restore() {
+    git_status
+    echo -e "${CY}Overlay/Untracked Options:${RT}"
+    echo -e "${BB}1.${RT} Keep untracked files (--overlay)"
+    echo -e "${BB}2.${RT} Restore deleted file"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter file/directory to restore: ${BB}" path
+            safe_git_exec restore --overlay "$path"
+            ;;
+        2)
+            read -p "${GG}Enter deleted file to restore: ${BB}" file
+            safe_git_exec restore --source=HEAD@{1} "$file"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle directory and multiple files
+directory_restore() {
+    git_status
+    echo -e "${CY}Directory/Multiple Files Options:${RT}"
+    echo -e "${BB}1.${RT} Restore entire directory"
+    echo -e "${BB}2.${RT} Restore multiple files"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter directory to restore: ${BB}" dir
+            safe_git_exec restore "$dir"
+            ;;
+        2)
+            read -p "${GG}Enter files to restore (space-separated): ${BB}" files
+            safe_git_exec restore $files
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle restore operations
+git_restore() {
+    echo -e "${CY}Git Restore Utility${RT}"
+    echo -e "${BB}1.${RT} Basic restore"
+    echo -e "${BB}2.${RT} Interactive/conflict resolution"
+    echo -e "${BB}3.${RT} Overlay/untracked files"
+    echo -e "${BB}4.${RT} Directory/multiple files"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_restore ;;
+        2) interactive_conflict_restore ;;
+        3) overlay_untracked_restore ;;
+        4) directory_restore ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
+
 # Function to list all estore files
