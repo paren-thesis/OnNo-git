@@ -1,3 +1,237 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic pull operations
+basic_pull() {
+    git_status
+    echo -e "${CY}Basic Pull Options:${RT}"
+    echo -e "${BB}1.${RT} Pull from default upstream"
+    echo -e "${BB}2.${RT} Pull from specific remote/branch"
+    echo -e "${BB}3.${RT} Pull with rebase"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec pull
+            ;;
+        2)
+            read -p "${GG}Enter remote name: ${BB}" remote
+            read -p "${GG}Enter branch name: ${BB}" branch
+            safe_git_exec pull "$remote" "$branch"
+            ;;
+        3)
+            safe_git_exec pull --rebase
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle merge behavior options
+merge_behavior() {
+    git_status
+    echo -e "${CY}Merge Behavior Options:${RT}"
+    echo -e "${BB}1.${RT} Force fast-forward only"
+    echo -e "${BB}2.${RT} Always create merge commit"
+    echo -e "${BB}3.${RT} Squash changes"
+    echo -e "${BB}4.${RT} No auto-commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    local merge_opts=""
+    case $option in
+        1)
+            merge_opts="--ff-only"
+            ;;
+        2)
+            merge_opts="--no-ff"
+            ;;
+        3)
+            merge_opts="--squash"
+            ;;
+        4)
+            merge_opts="--no-commit"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    read -p "${GG}Enter remote name (optional): ${BB}" remote
+    read -p "${GG}Enter branch name (optional): ${BB}" branch
+    safe_git_exec pull $merge_opts $remote $branch
+}
+
+# Function to handle submodule options
+submodule_pull() {
+    git_status
+    echo -e "${CY}Submodule Options:${RT}"
+    echo -e "${BB}1.${RT} Update submodules recursively"
+    echo -e "${BB}2.${RT} Skip submodule updates"
+    read -p "${GG}Select option: ${BB}" option
+
+    local submodule_opts=""
+    case $option in
+        1)
+            submodule_opts="--recurse-submodules"
+            ;;
+        2)
+            submodule_opts="--no-recurse-submodules"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    read -p "${GG}Enter remote name (optional): ${BB}" remote
+    read -p "${GG}Enter branch name (optional): ${BB}" branch
+    safe_git_exec pull $submodule_opts $remote $branch
+}
+
+# Function to handle safety and verification options
+safety_pull() {
+    git_status
+    echo -e "${CY}Safety and Verification Options:${RT}"
+    echo -e "${BB}1.${RT} Verify signatures"
+    echo -e "${BB}2.${RT} Bypass hooks"
+    echo -e "${BB}3.${RT} Allow unrelated histories"
+    read -p "${GG}Select option: ${BB}" option
+
+    local safety_opts=""
+    case $option in
+        1)
+            safety_opts="--verify-signatures"
+            ;;
+        2)
+            safety_opts="--no-verify"
+            ;;
+        3)
+            safety_opts="--allow-unrelated-histories"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    read -p "${GG}Enter remote name (optional): ${BB}" remote
+    read -p "${GG}Enter branch name (optional): ${BB}" branch
+    safe_git_exec pull $safety_opts $remote $branch
+}
+
+# Function to handle output control options
+output_control() {
+    git_status
+    echo -e "${CY}Output Control Options:${RT}"
+    echo -e "${BB}1.${RT} Verbose output"
+    echo -e "${BB}2.${RT} Quiet output"
+    echo -e "${BB}3.${RT} Force progress"
+    echo -e "${BB}4.${RT} Show diffstat"
+    echo -e "${BB}5.${RT} Suppress diffstat"
+    read -p "${GG}Select option: ${BB}" option
+
+    local output_opts=""
+    case $option in
+        1)
+            output_opts="--verbose"
+            ;;
+        2)
+            output_opts="--quiet"
+            ;;
+        3)
+            output_opts="--progress"
+            ;;
+        4)
+            output_opts="--stat"
+            ;;
+        5)
+            output_opts="--no-stat"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    read -p "${GG}Enter remote name (optional): ${BB}" remote
+    read -p "${GG}Enter branch name (optional): ${BB}" branch
+    safe_git_exec pull $output_opts $remote $branch
+}
+
+# Function to handle autostash options
+autostash_pull() {
+    git_status
+    echo -e "${CY}Autostash Options:${RT}"
+    echo -e "${BB}1.${RT} Pull with autostash"
+    echo -e "${BB}2.${RT} Pull with autostash and rebase"
+    read -p "${GG}Select option: ${BB}" option
+
+    local autostash_opts="--autostash"
+    case $option in
+        1)
+            ;;
+        2)
+            autostash_opts="--autostash --rebase"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    read -p "${GG}Enter remote name (optional): ${BB}" remote
+    read -p "${GG}Enter branch name (optional): ${BB}" branch
+    safe_git_exec pull $autostash_opts $remote $branch
+}
+
+# Function to handle merge message options
+merge_message() {
+    git_status
+    echo -e "${CY}Merge Message Options:${RT}"
+    echo -e "${BB}1.${RT} Include commit summaries"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter number of summaries to include: ${BB}" count
+            read -p "${GG}Enter remote name (optional): ${BB}" remote
+            read -p "${GG}Enter branch name (optional): ${BB}" branch
+            safe_git_exec pull --log=$count $remote $branch
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle pull operations
+git_pull() {
+    echo -e "${CY}Git Pull Utility${RT}"
+    echo -e "${BB}1.${RT} Basic pull"
+    echo -e "${BB}2.${RT} Merge behavior"
+    echo -e "${BB}3.${RT} Submodule options"
+    echo -e "${BB}4.${RT} Safety and verification"
+    echo -e "${BB}5.${RT} Output control"
+    echo -e "${BB}6.${RT} Autostash options"
+    echo -e "${BB}7.${RT} Merge message"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_pull ;;
+        2) merge_behavior ;;
+        3) submodule_pull ;;
+        4) safety_pull ;;
+        5) output_control ;;
+        6) autostash_pull ;;
+        7) merge_message ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
