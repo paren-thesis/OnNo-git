@@ -6,11 +6,24 @@ source /c/OnNo-git/bin/functions/utils/utils
 # Commit with a message
 commit_with_message() {
     git_status
+    echo -e "${CY}Commit Options:${RT}"
+    echo -e "${BB}1.${RT} Basic commit"
+    echo -e "${BB}2.${RT} Commit with no verify"
+    echo -e "${BB}3.${RT} Commit with dry run"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
     fi
-    if ! safe_git_exec commit -m "$message"; then
+
+    local commit_opts=""
+    case $option in
+        2) commit_opts="--no-verify" ;;
+        3) commit_opts="--dry-run" ;;
+    esac
+
+    if ! safe_git_exec commit $commit_opts -m "$message"; then
         return 1
     fi
     show_success "Changes have been committed with the message: '$message'"
@@ -19,9 +32,21 @@ commit_with_message() {
 # Amend the last commit
 amend_last_commit() {
     git_status
+    echo -e "${CY}Amend Options:${RT}"
+    echo -e "${BB}1.${RT} Edit message and changes"
+    echo -e "${BB}2.${RT} Keep message, edit changes"
+    echo -e "${BB}3.${RT} Skip hooks"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Are you sure you want to amend the last commit? (y/n): ${BB}" confirm
     if [[ $confirm == "y" || $confirm == "Y" ]]; then
-        if ! safe_git_exec commit --amend; then
+        local amend_opts=""
+        case $option in
+            2) amend_opts="--no-edit" ;;
+            3) amend_opts="--no-verify" ;;
+        esac
+
+        if ! safe_git_exec commit --amend $amend_opts; then
             return 1
         fi
         show_success "The last commit has been amended"
@@ -33,6 +58,12 @@ amend_last_commit() {
 # Commit specific files
 commit_specific_files() {
     git_status
+    echo -e "${CY}Commit Options:${RT}"
+    echo -e "${BB}1.${RT} Commit only specified files"
+    echo -e "${BB}2.${RT} Include specified files"
+    echo -e "${BB}3.${RT} Interactive selection"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Enter the file name(s) to commit (space-separated): ${BB}" files
     read -p "${GG}Enter the commit message: ${BB}" message
 
@@ -40,18 +71,27 @@ commit_specific_files() {
         return 1
     fi
 
-    # Split files into an array
     IFS=' ' read -r -a files_array <<< "$files"
 
-    # Check if files exist and are tracked by Git
     for file in "${files_array[@]}"; do
         if ! is_file_tracked "$file"; then
             return 1
         fi
     done
 
-    # Stage and commit the files
-    if ! safe_git_exec add "${files_array[@]}" || ! safe_git_exec commit -m "$message"; then
+    local commit_opts=""
+    case $option in
+        1) commit_opts="--only" ;;
+        2) commit_opts="--include" ;;
+        3)
+            if ! safe_git_exec add -p "${files_array[@]}"; then
+                return 1
+            fi
+            commit_opts=""
+            ;;
+    esac
+
+    if ! safe_git_exec commit $commit_opts -m "$message" "${files_array[@]}"; then
         return 1
     fi
     show_success "File(s) '${files_array[*]}' have been committed with the message: '$message'"
@@ -60,11 +100,24 @@ commit_specific_files() {
 # Skip staging and commit directly
 skip_staging_and_commit() {
     git_status
+    echo -e "${CY}Commit Options:${RT}"
+    echo -e "${BB}1.${RT} Basic commit all"
+    echo -e "${BB}2.${RT} Commit all with no verify"
+    echo -e "${BB}3.${RT} Commit all with dry run"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Enter the commit message: ${BB}" message
     if ! validate_input "$message" "Commit message cannot be empty"; then
         return 1
     fi
-    if ! safe_git_exec commit -a -m "$message"; then
+
+    local commit_opts="-a"
+    case $option in
+        2) commit_opts="$commit_opts --no-verify" ;;
+        3) commit_opts="$commit_opts --dry-run" ;;
+    esac
+
+    if ! safe_git_exec commit $commit_opts -m "$message"; then
         return 1
     fi
     show_success "Changes have been committed directly with the message: '$message'"
@@ -135,4 +188,142 @@ undo_last_commit() {
     else
         show_warning "Undo operation canceled"
     fi
+}
+
+# New function for interactive commit
+interactive_commit() {
+    git_status
+    echo -e "${CY}Interactive Commit Options:${RT}"
+    echo -e "${BB}1.${RT} Interactive patch selection"
+    echo -e "${BB}2.${RT} Interactive file selection"
+    echo -e "${BB}3.${RT} Interactive with no verify"
+    read -p "${GG}Select option: ${BB}" option
+
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if ! validate_input "$message" "Commit message cannot be empty"; then
+        return 1
+    fi
+
+    local commit_opts=""
+    case $option in
+        1) commit_opts="-p" ;;
+        2) commit_opts="-i" ;;
+        3) commit_opts="-i --no-verify" ;;
+    esac
+
+    if ! safe_git_exec commit $commit_opts -m "$message"; then
+        return 1
+    fi
+    show_success "Interactive commit completed with the message: '$message'"
+}
+
+# New function for commit with pathspec
+commit_with_pathspec() {
+    git_status
+    echo -e "${CY}Pathspec Options:${RT}"
+    echo -e "${BB}1.${RT} From file"
+    echo -e "${BB}2.${RT} With NUL separator"
+    read -p "${GG}Select option: ${BB}" option
+
+    read -p "${GG}Enter the pathspec file path: ${BB}" pathspec_file
+    read -p "${GG}Enter the commit message: ${BB}" message
+
+    if ! validate_input "$pathspec_file" "Pathspec file cannot be empty" || ! validate_input "$message" "Commit message cannot be empty"; then
+        return 1
+    fi
+
+    local commit_opts=""
+    case $option in
+        1) commit_opts="--pathspec-from-file=$pathspec_file" ;;
+        2) commit_opts="--pathspec-from-file=$pathspec_file --pathspec-file-nul" ;;
+    esac
+
+    if ! safe_git_exec commit $commit_opts -m "$message"; then
+        return 1
+    fi
+    show_success "Commit completed using pathspec file with the message: '$message'"
+}
+
+# New function for commit with status output
+commit_with_status() {
+    git_status
+    echo -e "${CY}Status Output Options:${RT}"
+    echo -e "${BB}1.${RT} Short format"
+    echo -e "${BB}2.${RT} Porcelain format"
+    echo -e "${BB}3.${RT} With branch info"
+    echo -e "${BB}4.${RT} With ahead/behind counts"
+    read -p "${GG}Select option: ${BB}" option
+
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if ! validate_input "$message" "Commit message cannot be empty"; then
+        return 1
+    fi
+
+    local status_opts=""
+    case $option in
+        1) status_opts="--short" ;;
+        2) status_opts="--porcelain" ;;
+        3) status_opts="--branch" ;;
+        4) status_opts="--ahead-behind" ;;
+    esac
+
+    if ! safe_git_exec commit -m "$message"; then
+        return 1
+    fi
+    safe_git_exec status $status_opts
+    show_success "Commit completed with status output"
+}
+
+# New function for commit with untracked files
+commit_with_untracked() {
+    git_status
+    echo -e "${CY}Untracked Files Options:${RT}"
+    echo -e "${BB}1.${RT} Show all untracked"
+    echo -e "${BB}2.${RT} Show normal untracked"
+    echo -e "${BB}3.${RT} Hide untracked"
+    read -p "${GG}Select option: ${BB}" option
+
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if ! validate_input "$message" "Commit message cannot be empty"; then
+        return 1
+    fi
+
+    local untracked_opts=""
+    case $option in
+        1) untracked_opts="-u all" ;;
+        2) untracked_opts="-u normal" ;;
+        3) untracked_opts="-u no" ;;
+    esac
+
+    if ! safe_git_exec commit $untracked_opts -m "$message"; then
+        return 1
+    fi
+    show_success "Commit completed with untracked files option"
+}
+
+# New function for commit with post-rewrite hook control
+commit_with_hook_control() {
+    git_status
+    echo -e "${CY}Hook Control Options:${RT}"
+    echo -e "${BB}1.${RT} Skip post-rewrite hook"
+    echo -e "${BB}2.${RT} Skip all hooks"
+    echo -e "${BB}3.${RT} Force verify hooks"
+    read -p "${GG}Select option: ${BB}" option
+
+    read -p "${GG}Enter the commit message: ${BB}" message
+    if ! validate_input "$message" "Commit message cannot be empty"; then
+        return 1
+    fi
+
+    local hook_opts=""
+    case $option in
+        1) hook_opts="--no-post-rewrite" ;;
+        2) hook_opts="--no-verify" ;;
+        3) hook_opts="--verify" ;;
+    esac
+
+    if ! safe_git_exec commit $hook_opts -m "$message"; then
+        return 1
+    fi
+    show_success "Commit completed with hook control"
 }
