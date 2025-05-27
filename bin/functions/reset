@@ -1,3 +1,136 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic reset operations
+basic_reset() {
+    git_status
+    echo -e "${CY}Basic Reset Options:${RT}"
+    echo -e "${BB}1.${RT} Soft reset (keep changes staged)"
+    echo -e "${BB}2.${RT} Mixed reset (unstage changes, keep files)"
+    echo -e "${BB}3.${RT} Hard reset (discard all changes)"
+    echo -e "${BB}4.${RT} Reset to remote branch"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter commit (default HEAD~1): ${BB}" commit
+            commit=${commit:-HEAD~1}
+            safe_git_exec reset --soft "$commit"
+            ;;
+        2)
+            read -p "${GG}Enter commit (default HEAD~1): ${BB}" commit
+            commit=${commit:-HEAD~1}
+            safe_git_exec reset --mixed "$commit"
+            ;;
+        3)
+            read -p "${GG}Enter commit (default HEAD~1): ${BB}" commit
+            commit=${commit:-HEAD~1}
+            safe_git_exec reset --hard "$commit"
+            ;;
+        4)
+            read -p "${GG}Enter remote/branch (e.g., origin/main): ${BB}" remote_branch
+            safe_git_exec reset --hard "$remote_branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to reset specific files
+file_reset() {
+    git_status
+    echo -e "${CY}File Reset Options:${RT}"
+    echo -e "${BB}1.${RT} Unstage a file (keep working dir changes)"
+    echo -e "${BB}2.${RT} Reset file(s) to specific commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter file to unstage: ${BB}" file
+            safe_git_exec reset HEAD "$file"
+            ;;
+        2)
+            read -p "${GG}Enter commit (default HEAD): ${BB}" commit
+            commit=${commit:-HEAD}
+            read -p "${GG}Enter file(s) or directory: ${BB}" files
+            safe_git_exec reset "$commit" -- $files
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function for patch and intent-to-add
+patch_intent_reset() {
+    git_status
+    echo -e "${CY}Patch/Intent-to-Add Options:${RT}"
+    echo -e "${BB}1.${RT} Interactive patch reset (-p)"
+    echo -e "${BB}2.${RT} Intent-to-add (-N)"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec reset -p
+            ;;
+        2)
+            read -p "${GG}Enter file(s): ${BB}" files
+            safe_git_exec reset -N $files
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function for submodules and quiet mode
+submodule_quiet_reset() {
+    git_status
+    echo -e "${CY}Submodule/Quiet Options:${RT}"
+    echo -e "${BB}1.${RT} Reset with submodules"
+    echo -e "${BB}2.${RT} Quiet reset"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter commit (default HEAD): ${BB}" commit
+            commit=${commit:-HEAD}
+            safe_git_exec reset --recurse-submodules "$commit"
+            ;;
+        2)
+            read -p "${GG}Enter commit (default HEAD): ${BB}" commit
+            commit=${commit:-HEAD}
+            safe_git_exec reset --quiet "$commit"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle reset operations
+git_reset() {
+    echo -e "${CY}Git Reset Utility${RT}"
+    echo -e "${BB}1.${RT} Basic reset (soft/mixed/hard/remote)"
+    echo -e "${BB}2.${RT} File reset"
+    echo -e "${BB}3.${RT} Patch/intent-to-add"
+    echo -e "${BB}4.${RT} Submodule/quiet"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_reset ;;
+        2) file_reset ;;
+        3) patch_intent_reset ;;
+        4) submodule_quiet_reset ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
