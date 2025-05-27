@@ -1,3 +1,135 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic remove operations
+basic_remove() {
+    git_status
+    echo -e "${CY}Basic Remove Options:${RT}"
+    echo -e "${BB}1.${RT} Remove file (delete and stage)"
+    echo -e "${BB}2.${RT} Remove directory (recursive)"
+    echo -e "${BB}3.${RT} Remove multiple files"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter file to remove: ${BB}" file
+            safe_git_exec rm "$file"
+            ;;
+        2)
+            read -p "${GG}Enter directory to remove: ${BB}" dir
+            safe_git_exec rm -r "$dir"
+            ;;
+        3)
+            read -p "${GG}Enter files to remove (space-separated): ${BB}" files
+            safe_git_exec rm $files
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle cached and force removal
+cached_force_remove() {
+    git_status
+    echo -e "${CY}Cached/Force Options:${RT}"
+    echo -e "${BB}1.${RT} Remove from Git but keep file (--cached)"
+    echo -e "${BB}2.${RT} Force remove modified file (-f)"
+    echo -e "${BB}3.${RT} Force remove directory (-f -r)"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter file to untrack: ${BB}" file
+            safe_git_exec rm --cached "$file"
+            ;;
+        2)
+            read -p "${GG}Enter modified file to force remove: ${BB}" file
+            safe_git_exec rm -f "$file"
+            ;;
+        3)
+            read -p "${GG}Enter directory to force remove: ${BB}" dir
+            safe_git_exec rm -f -r "$dir"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle dry run and safety options
+dry_run_safety_remove() {
+    git_status
+    echo -e "${CY}Dry Run/Safety Options:${RT}"
+    echo -e "${BB}1.${RT} Dry run (show what would be removed)"
+    echo -e "${BB}2.${RT} Ignore unmatched files"
+    echo -e "${BB}3.${RT} Sparse checkout removal"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter pattern to check (e.g., *.tmp): ${BB}" pattern
+            safe_git_exec rm -n "$pattern"
+            ;;
+        2)
+            read -p "${GG}Enter pattern to remove: ${BB}" pattern
+            safe_git_exec rm --ignore-unmatch "$pattern"
+            ;;
+        3)
+            read -p "${GG}Enter file outside sparse-checkout: ${BB}" file
+            safe_git_exec rm --sparse "$file"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle batch operations
+batch_remove() {
+    git_status
+    echo -e "${CY}Batch Remove Options:${RT}"
+    echo -e "${BB}1.${RT} Remove all files in directory"
+    echo -e "${BB}2.${RT} Remove by pattern"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter directory: ${BB}" dir
+            safe_git_exec rm "$dir"/*
+            ;;
+        2)
+            read -p "${GG}Enter pattern (e.g., *.log): ${BB}" pattern
+            safe_git_exec rm "$pattern"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle remove operations
+git_rm() {
+    echo -e "${CY}Git Remove Utility${RT}"
+    echo -e "${BB}1.${RT} Basic remove"
+    echo -e "${BB}2.${RT} Cached/force remove"
+    echo -e "${BB}3.${RT} Dry run/safety"
+    echo -e "${BB}4.${RT} Batch remove"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_remove ;;
+        2) cached_force_remove ;;
+        3) dry_run_safety_remove ;;
+        4) batch_remove ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
