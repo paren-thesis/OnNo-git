@@ -1,3 +1,224 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic search options
+basic_search() {
+    git_status
+    echo -e "${CY}Basic Search Options:${RT}"
+    echo -e "${BB}1.${RT} Search in work tree"
+    echo -e "${BB}2.${RT} Search in index"
+    echo -e "${BB}3.${RT} Search in non-git files"
+    echo -e "${BB}4.${RT} Search in untracked files"
+    read -p "${GG}Select option: ${BB}" option
+
+    local search_opts=""
+    case $option in
+        1)
+            search_opts=""
+            ;;
+        2)
+            search_opts="--cached"
+            ;;
+        3)
+            search_opts="--no-index"
+            ;;
+        4)
+            search_opts="--untracked"
+            ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $search_opts "$pattern"
+}
+
+# Function to handle regex options
+regex_search() {
+    git_status
+    echo -e "${CY}Regex Options:${RT}"
+    echo -e "${BB}1.${RT} Extended POSIX regex"
+    echo -e "${BB}2.${RT} Basic POSIX regex"
+    echo -e "${BB}3.${RT} Fixed strings"
+    echo -e "${BB}4.${RT} Perl regex"
+    read -p "${GG}Select option: ${BB}" option
+
+    local regex_opts=""
+    case $option in
+        1) regex_opts="-E" ;;
+        2) regex_opts="-G" ;;
+        3) regex_opts="-F" ;;
+        4) regex_opts="-P" ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $regex_opts "$pattern"
+}
+
+# Function to handle output format options
+format_output() {
+    git_status
+    echo -e "${CY}Output Format Options:${RT}"
+    echo -e "${BB}1.${RT} Show line numbers"
+    echo -e "${BB}2.${RT} Show column numbers"
+    echo -e "${BB}3.${RT} Show only filenames"
+    echo -e "${BB}4.${RT} Show only matching parts"
+    echo -e "${BB}5.${RT} Show match count"
+    read -p "${GG}Select option: ${BB}" option
+
+    local format_opts=""
+    case $option in
+        1) format_opts="-n" ;;
+        2) format_opts="--column" ;;
+        3) format_opts="-l" ;;
+        4) format_opts="-o" ;;
+        5) format_opts="-c" ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $format_opts "$pattern"
+}
+
+# Function to handle context options
+context_search() {
+    git_status
+    echo -e "${CY}Context Options:${RT}"
+    echo -e "${BB}1.${RT} Show context lines"
+    echo -e "${BB}2.${RT} Show before context"
+    echo -e "${BB}3.${RT} Show after context"
+    echo -e "${BB}4.${RT} Show function context"
+    read -p "${GG}Select option: ${BB}" option
+
+    local context_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter number of context lines: ${BB}" lines
+            context_opts="-C $lines"
+            ;;
+        2)
+            read -p "${GG}Enter number of before context lines: ${BB}" lines
+            context_opts="-B $lines"
+            ;;
+        3)
+            read -p "${GG}Enter number of after context lines: ${BB}" lines
+            context_opts="-A $lines"
+            ;;
+        4)
+            context_opts="-W"
+            ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $context_opts "$pattern"
+}
+
+# Function to handle file options
+file_search() {
+    git_status
+    echo -e "${CY}File Options:${RT}"
+    echo -e "${BB}1.${RT} Read patterns from file"
+    echo -e "${BB}2.${RT} Search in submodules"
+    echo -e "${BB}3.${RT} Set max depth"
+    echo -e "${BB}4.${RT} Set max count per file"
+    read -p "${GG}Select option: ${BB}" option
+
+    local file_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter pattern file path: ${BB}" file
+            file_opts="-f $file"
+            ;;
+        2)
+            file_opts="--recurse-submodules"
+            ;;
+        3)
+            read -p "${GG}Enter max depth: ${BB}" depth
+            file_opts="--max-depth $depth"
+            ;;
+        4)
+            read -p "${GG}Enter max count: ${BB}" count
+            file_opts="-m $count"
+            ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $file_opts "$pattern"
+}
+
+# Function to handle matching options
+matching_options() {
+    git_status
+    echo -e "${CY}Matching Options:${RT}"
+    echo -e "${BB}1.${RT} Case insensitive"
+    echo -e "${BB}2.${RT} Word boundary"
+    echo -e "${BB}3.${RT} Invert match"
+    echo -e "${BB}4.${RT} Process binary as text"
+    read -p "${GG}Select option: ${BB}" option
+
+    local match_opts=""
+    case $option in
+        1) match_opts="-i" ;;
+        2) match_opts="-w" ;;
+        3) match_opts="-v" ;;
+        4) match_opts="-a" ;;
+    esac
+
+    read -p "${GG}Enter search pattern: ${BB}" pattern
+    safe_git_exec grep $match_opts "$pattern"
+}
+
+# Function to handle pattern combination
+pattern_combination() {
+    git_status
+    echo -e "${CY}Pattern Combination Options:${RT}"
+    echo -e "${BB}1.${RT} AND combination"
+    echo -e "${BB}2.${RT} OR combination"
+    echo -e "${BB}3.${RT} NOT combination"
+    read -p "${GG}Select option: ${BB}" option
+
+    local pattern_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter first pattern: ${BB}" pattern1
+            read -p "${GG}Enter second pattern: ${BB}" pattern2
+            pattern_opts="-e '$pattern1' --and -e '$pattern2'"
+            ;;
+        2)
+            read -p "${GG}Enter first pattern: ${BB}" pattern1
+            read -p "${GG}Enter second pattern: ${BB}" pattern2
+            pattern_opts="-e '$pattern1' --or -e '$pattern2'"
+            ;;
+        3)
+            read -p "${GG}Enter pattern to exclude: ${BB}" pattern
+            pattern_opts="--not -e '$pattern'"
+            ;;
+    esac
+
+    safe_git_exec grep $pattern_opts
+}
+
+# Main function to handle grep operations
+git_grep() {
+    echo -e "${CY}Git Grep Utility${RT}"
+    echo -e "${BB}1.${RT} Basic search"
+    echo -e "${BB}2.${RT} Regex search"
+    echo -e "${BB}3.${RT} Format output"
+    echo -e "${BB}4.${RT} Context search"
+    echo -e "${BB}5.${RT} File options"
+    echo -e "${BB}6.${RT} Matching options"
+    echo -e "${BB}7.${RT} Pattern combination"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_search ;;
+        2) regex_search ;;
+        3) format_output ;;
+        4) context_search ;;
+        5) file_search ;;
+        6) matching_options ;;
+        7) pattern_combination ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
