@@ -1,1 +1,5 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to list all estore files

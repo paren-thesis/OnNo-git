@@ -1,1 +1,3 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils

@@ -1,1 +1,228 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to show basic diffs
+show_basic_diff() {
+    git_status
+    echo -e "${CY}Basic Diff Options:${RT}"
+    echo -e "${BB}1.${RT} Unstaged changes"
+    echo -e "${BB}2.${RT} Staged changes"
+    echo -e "${BB}3.${RT} All changes"
+    echo -e "${BB}4.${RT} Compare to specific commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    local diff_opts=""
+    case $option in
+        1)
+            diff_opts=""
+            ;;
+        2)
+            diff_opts="--cached"
+            ;;
+        3)
+            diff_opts="HEAD"
+            ;;
+        4)
+            read -p "${GG}Enter commit hash: ${BB}" commit_hash
+            diff_opts="$commit_hash"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+
+    safe_git_exec diff $diff_opts
+}
+
+# Function to compare commits or branches
+compare_commits() {
+    git_status
+    echo -e "${CY}Compare Options:${RT}"
+    echo -e "${BB}1.${RT} Compare two commits"
+    echo -e "${BB}2.${RT} Compare two branches"
+    echo -e "${BB}3.${RT} Compare since common ancestor"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter first commit hash: ${BB}" commit1
+            read -p "${GG}Enter second commit hash: ${BB}" commit2
+            safe_git_exec diff "$commit1" "$commit2"
+            ;;
+        2)
+            read -p "${GG}Enter first branch: ${BB}" branch1
+            read -p "${GG}Enter second branch: ${BB}" branch2
+            safe_git_exec diff "$branch1..$branch2"
+            ;;
+        3)
+            read -p "${GG}Enter first commit: ${BB}" commit1
+            read -p "${GG}Enter second commit: ${BB}" commit2
+            safe_git_exec diff "$commit1...$commit2"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to show diff with specific output format
+show_formatted_diff() {
+    git_status
+    echo -e "${CY}Output Format Options:${RT}"
+    echo -e "${BB}1.${RT} Patch format (default)"
+    echo -e "${BB}2.${RT} Summary of changes"
+    echo -e "${BB}3.${RT} Numeric changes"
+    echo -e "${BB}4.${RT} Filenames only"
+    echo -e "${BB}5.${RT} Filenames with status"
+    echo -e "${BB}6.${RT} Word-level changes"
+    read -p "${GG}Select format: ${BB}" format
+
+    local format_opts=""
+    case $format in
+        1) format_opts="-p" ;;
+        2) format_opts="--stat" ;;
+        3) format_opts="--numstat" ;;
+        4) format_opts="--name-only" ;;
+        5) format_opts="--name-status" ;;
+        6) format_opts="--word-diff" ;;
+    esac
+
+    safe_git_exec diff $format_opts
+}
+
+# Function to detect file changes
+detect_file_changes() {
+    git_status
+    echo -e "${CY}File Change Detection Options:${RT}"
+    echo -e "${BB}1.${RT} Detect renames"
+    echo -e "${BB}2.${RT} Detect copies"
+    echo -e "${BB}3.${RT} Detect rewrites"
+    echo -e "${BB}4.${RT} Search for string changes"
+    read -p "${GG}Select option: ${BB}" option
+
+    local detect_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter similarity threshold (default: 50): ${BB}" threshold
+            threshold=${threshold:-50}
+            detect_opts="-M$threshold"
+            ;;
+        2)
+            detect_opts="-C"
+            ;;
+        3)
+            detect_opts="-B"
+            ;;
+        4)
+            read -p "${GG}Enter string to search for: ${BB}" search_string
+            detect_opts="-S$search_string"
+            ;;
+    esac
+
+    safe_git_exec diff $detect_opts
+}
+
+# Function to compare non-Git files
+compare_non_git_files() {
+    echo -e "${CY}Compare Non-Git Files${RT}"
+    read -p "${GG}Enter first file path: ${BB}" file1
+    read -p "${GG}Enter second file path: ${BB}" file2
+
+    if [ ! -f "$file1" ] || [ ! -f "$file2" ]; then
+        show_error "One or both files do not exist"
+        return 1
+    fi
+
+    safe_git_exec diff --no-index "$file1" "$file2"
+}
+
+# Function to show diff with advanced options
+show_advanced_diff() {
+    git_status
+    echo -e "${CY}Advanced Options:${RT}"
+    echo -e "${BB}1.${RT} Treat binary as text"
+    echo -e "${BB}2.${RT} Reverse comparison"
+    echo -e "${BB}3.${RT} Custom abbrev length"
+    echo -e "${BB}4.${RT} Limit rename detection"
+    read -p "${GG}Select option: ${BB}" option
+
+    local advanced_opts=""
+    case $option in
+        1)
+            advanced_opts="-a"
+            ;;
+        2)
+            advanced_opts="-R"
+            ;;
+        3)
+            read -p "${GG}Enter abbrev length: ${BB}" length
+            advanced_opts="--abbrev=$length"
+            ;;
+        4)
+            read -p "${GG}Enter file limit: ${BB}" limit
+            advanced_opts="-l$limit"
+            ;;
+    esac
+
+    safe_git_exec diff $advanced_opts
+}
+
+# Function to show diff with merge base
+show_merge_base_diff() {
+    git_status
+    read -p "${GG}Enter first branch/commit: ${BB}" first
+    read -p "${GG}Enter second branch/commit: ${BB}" second
+
+    safe_git_exec diff --merge-base "$first" "$second"
+}
+
+# Function to show diff with whitespace options
+show_whitespace_diff() {
+    git_status
+    echo -e "${CY}Whitespace Options:${RT}"
+    echo -e "${BB}1.${RT} Ignore space changes"
+    echo -e "${BB}2.${RT} Ignore all whitespace"
+    echo -e "${BB}3.${RT} Ignore blank lines"
+    read -p "${GG}Select option: ${BB}" option
+
+    local whitespace_opts=""
+    case $option in
+        1) whitespace_opts="-b" ;;
+        2) whitespace_opts="-w" ;;
+        3) whitespace_opts="--ignore-blank-lines" ;;
+    esac
+
+    safe_git_exec diff $whitespace_opts
+}
+
+# Main function to handle diffs
+git_diff() {
+    echo -e "${CY}Git Diff Utility${RT}"
+    echo -e "${BB}1.${RT} Show basic diff"
+    echo -e "${BB}2.${RT} Compare commits/branches"
+    echo -e "${BB}3.${RT} Show formatted diff"
+    echo -e "${BB}4.${RT} Detect file changes"
+    echo -e "${BB}5.${RT} Compare non-Git files"
+    echo -e "${BB}6.${RT} Show advanced diff"
+    echo -e "${BB}7.${RT} Show merge base diff"
+    echo -e "${BB}8.${RT} Show whitespace diff"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) show_basic_diff ;;
+        2) compare_commits ;;
+        3) show_formatted_diff ;;
+        4) detect_file_changes ;;
+        5) compare_non_git_files ;;
+        6) show_advanced_diff ;;
+        7) show_merge_base_diff ;;
+        8) show_whitespace_diff ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
