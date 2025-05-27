@@ -1,3 +1,232 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic log viewing
+basic_log() {
+    git_status
+    echo -e "${CY}Basic Log Options:${RT}"
+    echo -e "${BB}1.${RT} Show last N commits"
+    echo -e "${BB}2.${RT} Show oneline format"
+    echo -e "${BB}3.${RT} Show with graph"
+    echo -e "${BB}4.${RT} Show with date range"
+    read -p "${GG}Select option: ${BB}" option
+
+    local log_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter number of commits: ${BB}" count
+            log_opts="-n $count"
+            ;;
+        2)
+            log_opts="--oneline"
+            ;;
+        3)
+            log_opts="--graph"
+            ;;
+        4)
+            read -p "${GG}Enter start date (e.g., '2 weeks ago'): ${BB}" start
+            read -p "${GG}Enter end date (e.g., '3 days ago'): ${BB}" end
+            log_opts="--since='$start' --until='$end'"
+            ;;
+    esac
+
+    safe_git_exec log $log_opts
+}
+
+# Function to handle decoration options
+decorate_log() {
+    git_status
+    echo -e "${CY}Decoration Options:${RT}"
+    echo -e "${BB}1.${RT} Full decoration"
+    echo -e "${BB}2.${RT} Short decoration"
+    echo -e "${BB}3.${RT} Auto decoration"
+    echo -e "${BB}4.${RT} No decoration"
+    echo -e "${BB}5.${RT} Filter refs"
+    read -p "${GG}Select option: ${BB}" option
+
+    local decorate_opts=""
+    case $option in
+        1)
+            decorate_opts="--decorate=full"
+            ;;
+        2)
+            decorate_opts="--decorate=short"
+            ;;
+        3)
+            decorate_opts="--decorate=auto"
+            ;;
+        4)
+            decorate_opts="--decorate=none"
+            ;;
+        5)
+            read -p "${GG}Enter ref pattern (e.g., 'heads/*'): ${BB}" pattern
+            decorate_opts="--decorate-refs='$pattern'"
+            ;;
+    esac
+
+    safe_git_exec log $decorate_opts
+}
+
+# Function to handle line history
+line_history() {
+    git_status
+    echo -e "${CY}Line History Options:${RT}"
+    echo -e "${BB}1.${RT} Trace line range"
+    echo -e "${BB}2.${RT} Trace function"
+    read -p "${GG}Select option: ${BB}" option
+
+    local line_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter file path: ${BB}" file
+            read -p "${GG}Enter start line: ${BB}" start
+            read -p "${GG}Enter end line: ${BB}" end
+            line_opts="-L $start,$end:$file"
+            ;;
+        2)
+            read -p "${GG}Enter file path: ${BB}" file
+            read -p "${GG}Enter function name: ${BB}" func
+            line_opts="-L :$func:$file"
+            ;;
+    esac
+
+    safe_git_exec log $line_opts
+}
+
+# Function to handle commit range
+commit_range() {
+    git_status
+    echo -e "${CY}Commit Range Options:${RT}"
+    echo -e "${BB}1.${RT} Compare with tag"
+    echo -e "${BB}2.${RT} Compare branches"
+    echo -e "${BB}3.${RT} Compare with commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    local range_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            range_opts="$tag..HEAD"
+            ;;
+        2)
+            read -p "${GG}Enter base branch: ${BB}" base
+            read -p "${GG}Enter compare branch: ${BB}" compare
+            range_opts="$base..$compare"
+            ;;
+        3)
+            read -p "${GG}Enter commit hash: ${BB}" commit
+            range_opts="$commit..HEAD"
+            ;;
+    esac
+
+    safe_git_exec log $range_opts
+}
+
+# Function to handle path filtering
+path_filter() {
+    git_status
+    echo -e "${CY}Path Filter Options:${RT}"
+    echo -e "${BB}1.${RT} Filter by directory"
+    echo -e "${BB}2.${RT} Filter by file"
+    echo -e "${BB}3.${RT} Filter by pattern"
+    read -p "${GG}Select option: ${BB}" option
+
+    local path_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter directory path: ${BB}" dir
+            path_opts="-- $dir"
+            ;;
+        2)
+            read -p "${GG}Enter file path: ${BB}" file
+            path_opts="-- $file"
+            ;;
+        3)
+            read -p "${GG}Enter file pattern: ${BB}" pattern
+            path_opts="-- '$pattern'"
+            ;;
+    esac
+
+    safe_git_exec log $path_opts
+}
+
+# Function to handle custom formatting
+format_log() {
+    git_status
+    echo -e "${CY}Format Options:${RT}"
+    echo -e "${BB}1.${RT} Custom format"
+    echo -e "${BB}2.${RT} Use mailmap"
+    echo -e "${BB}3.${RT} Show source"
+    read -p "${GG}Select option: ${BB}" option
+
+    local format_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter format string (e.g., '%h | %an | %s'): ${BB}" format
+            format_opts="--pretty=format:'$format'"
+            ;;
+        2)
+            format_opts="--use-mailmap"
+            ;;
+        3)
+            format_opts="--source"
+            ;;
+    esac
+
+    safe_git_exec log $format_opts
+}
+
+# Function to handle object display
+show_object() {
+    git_status
+    echo -e "${CY}Object Display Options:${RT}"
+    echo -e "${BB}1.${RT} Show commit"
+    echo -e "${BB}2.${RT} Show tag"
+    echo -e "${BB}3.${RT} Show file at commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    local show_opts=""
+    case $option in
+        1)
+            read -p "${GG}Enter commit hash: ${BB}" commit
+            safe_git_exec show "$commit"
+            ;;
+        2)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec show "$tag"
+            ;;
+        3)
+            read -p "${GG}Enter commit hash: ${BB}" commit
+            read -p "${GG}Enter file path: ${BB}" file
+            safe_git_exec show "$commit:$file"
+            ;;
+    esac
+}
+
+# Main function to handle log operations
+git_log() {
+    echo -e "${CY}Git Log Utility${RT}"
+    echo -e "${BB}1.${RT} Basic log"
+    echo -e "${BB}2.${RT} Decoration options"
+    echo -e "${BB}3.${RT} Line history"
+    echo -e "${BB}4.${RT} Commit range"
+    echo -e "${BB}5.${RT} Path filter"
+    echo -e "${BB}6.${RT} Format options"
+    echo -e "${BB}7.${RT} Show object"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_log ;;
+        2) decorate_log ;;
+        3) line_history ;;
+        4) commit_range ;;
+        5) path_filter ;;
+        6) format_log ;;
+        7) show_object ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
