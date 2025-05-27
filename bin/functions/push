@@ -2,45 +2,255 @@
 
 source /c/OnNo-git/bin/functions/utils/utils
 
+# Enhanced basic push function
 push_up() {
-    git push
+    git_status
+    echo -e "${CY}Basic Push Options:${RT}"
+    echo -e "${BB}1.${RT} Push to upstream"
+    echo -e "${BB}2.${RT} Push to specific remote"
+    echo -e "${BB}3.${RT} Push with verbose output"
+    echo -e "${BB}4.${RT} Push with dry run"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push
+            ;;
+        2)
+            read -p "${GG}Enter remote name: ${BB}" remote
+            safe_git_exec push "$remote"
+            ;;
+        3)
+            safe_git_exec push -v
+            ;;
+        4)
+            safe_git_exec push --dry-run
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
 }
 
+# Enhanced push all function
 push_up_all() {
-    git push --all
+    git_status
+    echo -e "${CY}Push All Options:${RT}"
+    echo -e "${BB}1.${RT} Push all branches"
+    echo -e "${BB}2.${RT} Push all branches with tags"
+    echo -e "${BB}3.${RT} Push all branches with submodules"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push --all
+            ;;
+        2)
+            safe_git_exec push --all --follow-tags
+            ;;
+        3)
+            safe_git_exec push --all --recurse-submodules
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
 }
 
+# Enhanced force push function
 push_up_force() {
+    git_status
+    echo -e "${CY}Force Push Options:${RT}"
+    echo -e "${BB}1.${RT} Force push (unsafe)"
+    echo -e "${BB}2.${RT} Force push with lease (safe)"
+    echo -e "${BB}3.${RT} Force push if includes"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Are you sure you want to force push? This can overwrite remote changes! (y/n): ${BB}" confirm
     if [[ $confirm == "y" || $confirm == "Y" ]]; then
-        git push --force
-        if [ $? -eq 0 ]; then
-            echo -e "${GG}Force push completed successfully!${RT}"
-        else
-            echo -e "${RE}Force push failed.${RT}"
-        fi
+        case $option in
+            1)
+                safe_git_exec push --force
+                ;;
+            2)
+                safe_git_exec push --force-with-lease
+                ;;
+            3)
+                safe_git_exec push --force-if-includes
+                ;;
+            *)
+                echo -e "${RE}Invalid option${RT}"
+                return 1
+                ;;
+        esac
     else
         echo -e "${RE}Force push canceled.${RT}"
     fi
 }
 
+# Enhanced push tags function
 push_up_tags() {
-    git push --tags
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Tags pushed successfully!${RT}"
-    else
-        echo -e "${RE}Failed to push tags.${RT}"
-    fi
+    git_status
+    echo -e "${CY}Push Tags Options:${RT}"
+    echo -e "${BB}1.${RT} Push all tags"
+    echo -e "${BB}2.${RT} Push follow tags"
+    echo -e "${BB}3.${RT} Push specific tag"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push --tags
+            ;;
+        2)
+            safe_git_exec push --follow-tags
+            ;;
+        3)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec push origin "$tag"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
 }
 
+# Enhanced push upstream function
 push_up_upstream() {
+    git_status
+    echo -e "${CY}Push Upstream Options:${RT}"
+    echo -e "${BB}1.${RT} Set upstream and push"
+    echo -e "${BB}2.${RT} Set upstream with atomic push"
+    echo -e "${BB}3.${RT} Set upstream with signed push"
+    read -p "${GG}Select option: ${BB}" option
+
     read -p "${GG}Enter the branch name to set upstream: ${BB}" branch_name
-    git push -u origin "$branch_name"
-    if [ $? -eq 0 ]; then
-        echo -e "${GG}Upstream branch set successfully!${RT}"
-    else
-        echo -e "${RE}Failed to set upstream branch.${RT}"
-    fi
+    case $option in
+        1)
+            safe_git_exec push -u origin "$branch_name"
+            ;;
+        2)
+            safe_git_exec push -u origin "$branch_name" --atomic
+            ;;
+        3)
+            safe_git_exec push -u origin "$branch_name" --signed
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# New function for deleting remote branches
+push_delete_branch() {
+    git_status
+    echo -e "${CY}Delete Remote Branch Options:${RT}"
+    echo -e "${BB}1.${RT} Delete single branch"
+    echo -e "${BB}2.${RT} Delete multiple branches"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter remote name: ${BB}" remote
+            read -p "${GG}Enter branch name to delete: ${BB}" branch
+            safe_git_exec push -d "$remote" "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter remote name: ${BB}" remote
+            read -p "${GG}Enter branch names (space-separated): ${BB}" branches
+            for branch in $branches; do
+                safe_git_exec push -d "$remote" "$branch"
+            done
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# New function for mirror push
+push_mirror() {
+    git_status
+    echo -e "${CY}Mirror Push Options:${RT}"
+    echo -e "${BB}1.${RT} Mirror push"
+    echo -e "${BB}2.${RT} Mirror push with atomic"
+    echo -e "${BB}3.${RT} Mirror push with prune"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push --mirror
+            ;;
+        2)
+            safe_git_exec push --mirror --atomic
+            ;;
+        3)
+            safe_git_exec push --mirror --prune
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# New function for network options
+push_network() {
+    git_status
+    echo -e "${CY}Network Options:${RT}"
+    echo -e "${BB}1.${RT} Use IPv4"
+    echo -e "${BB}2.${RT} Use IPv6"
+    echo -e "${BB}3.${RT} Push with submodules"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec push -4
+            ;;
+        2)
+            safe_git_exec push -6
+            ;;
+        3)
+            safe_git_exec push --recurse-submodules
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle push operations
+git_push() {
+    echo -e "${CY}Git Push Utility${RT}"
+    echo -e "${BB}1.${RT} Basic push"
+    echo -e "${BB}2.${RT} Push all"
+    echo -e "${BB}3.${RT} Force push"
+    echo -e "${BB}4.${RT} Push tags"
+    echo -e "${BB}5.${RT} Push upstream"
+    echo -e "${BB}6.${RT} Delete remote branch"
+    echo -e "${BB}7.${RT} Mirror push"
+    echo -e "${BB}8.${RT} Network options"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) push_up ;;
+        2) push_up_all ;;
+        3) push_up_force ;;
+        4) push_up_tags ;;
+        5) push_up_upstream ;;
+        6) push_delete_branch ;;
+        7) push_mirror ;;
+        8) push_network ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
 }
 
 
