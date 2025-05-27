@@ -1,1 +1,129 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to show backfill options
+show_backfill_options() {
+    echo -e "${CY}Git Backfill Options:${RT}"
+    echo -e "${BB}1.${RT} Standard Backfill (fetch all missing objects)"
+    echo -e "${BB}2.${RT} Sparse Backfill (fetch only needed objects)"
+    echo -e "${BB}3.${RT} Batch Backfill (optimize network requests)"
+    echo -e "${BB}4.${RT} Custom Backfill (configure all options)"
+}
+
+# Function to perform standard backfill
+backfill_standard() {
+    echo -e "${CY}Performing standard backfill...${RT}"
+    git fetch --unshallow
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Standard backfill completed successfully${RT}"
+    else
+        echo -e "${RE}Standard backfill failed${RT}"
+    fi
+}
+
+# Function to perform sparse backfill
+backfill_sparse() {
+    echo -e "${CY}Performing sparse backfill (only fetching needed objects)...${RT}"
+    git fetch --unshallow --sparse
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Sparse backfill completed successfully${RT}"
+    else
+        echo -e "${RE}Sparse backfill failed${RT}"
+    fi
+}
+
+# Function to perform batch backfill
+backfill_batch() {
+    echo -e "${CY}Enter batch size (number of objects per request):${RT}"
+    read -p "${BB}> ${RT}" batch_size
+    
+    # Validate batch size
+    if ! [[ "$batch_size" =~ ^[0-9]+$ ]]; then
+        echo -e "${RE}Invalid batch size. Please enter a positive number.${RT}"
+        return 1
+    fi
+    
+    echo -e "${CY}Performing batch backfill with size $batch_size...${RT}"
+    git fetch --unshallow --batch-size="$batch_size"
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Batch backfill completed successfully${RT}"
+    else
+        echo -e "${RE}Batch backfill failed${RT}"
+    fi
+}
+
+# Function to perform custom backfill
+backfill_custom() {
+    local batch_size=""
+    local sparse_option=""
+    
+    # Get batch size
+    echo -e "${CY}Enter batch size (press Enter to skip):${RT}"
+    read -p "${BB}> ${RT}" batch_size
+    
+    # Validate batch size if provided
+    if [ ! -z "$batch_size" ]; then
+        if ! [[ "$batch_size" =~ ^[0-9]+$ ]]; then
+            echo -e "${RE}Invalid batch size. Please enter a positive number.${RT}"
+            return 1
+        fi
+        batch_size="--batch-size=$batch_size"
+    fi
+    
+    # Get sparse option
+    echo -e "${CY}Use sparse mode? (y/n):${RT}"
+    read -p "${BB}> ${RT}" use_sparse
+    case "$use_sparse" in
+        y|Y) sparse_option="--sparse" ;;
+        n|N) sparse_option="--no-sparse" ;;
+        *) echo -e "${RE}Invalid option. Using default.${RT}" ;;
+    esac
+    
+    # Build and execute command
+    echo -e "${CY}Performing custom backfill...${RT}"
+    git fetch --unshallow $batch_size $sparse_option
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Custom backfill completed successfully${RT}"
+    else
+        echo -e "${RE}Custom backfill failed${RT}"
+    fi
+}
+
+# Function to show backfill status
+show_backfill_status() {
+    echo -e "${CY}Current Repository Status:${RT}"
+    git status
+    echo
+    echo -e "${CY}Fetch Status:${RT}"
+    git fetch --dry-run
+}
+
+# Main function to handle backfill operations
+git_backfill() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_backfill_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) backfill_standard ;;
+            2) backfill_sparse ;;
+            3) backfill_batch ;;
+            4) backfill_custom ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        show_backfill_status
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+        clear
+    done
+}
+
+# Execute the main function
+git_backfill
