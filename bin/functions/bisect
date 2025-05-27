@@ -1,1 +1,290 @@
 #!/bin/bash
+
+source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to show bisect options
+show_bisect_options() {
+    echo -e "${CY}Git Bisect Options:${RT}"
+    echo -e "${BB}1.${RT} Start Bisect Session"
+    echo -e "${BB}2.${RT} Mark Commit (Good/Bad)"
+    echo -e "${BB}3.${RT} View/Set Terms"
+    echo -e "${BB}4.${RT} Skip Commit"
+    echo -e "${BB}5.${RT} Move to Next Commit"
+    echo -e "${BB}6.${RT} Reset Bisect Session"
+    echo -e "${BB}7.${RT} Visualize Progress"
+    echo -e "${BB}8.${RT} Save Bisect Log"
+    echo -e "${BB}9.${RT} Replay Bisect Log"
+    echo -e "${BB}10.${RT} Run Automated Bisect"
+}
+
+# Function to start bisect session
+start_bisect() {
+    echo -e "${CY}Starting bisect session...${RT}"
+    
+    # Get bad commit
+    echo -e "${BB}Enter bad commit (e.g., HEAD):${RT}"
+    read -p "${BB}> ${RT}" bad_commit
+    
+    # Get good commit
+    echo -e "${BB}Enter good commit (e.g., v1.0):${RT}"
+    read -p "${BB}> ${RT}" good_commit
+    
+    # Get optional pathspec
+    echo -e "${BB}Enter pathspec to limit search (press Enter to skip):${RT}"
+    read -p "${BB}> ${RT}" pathspec
+    
+    # Get custom terms
+    echo -e "${BB}Use custom terms? (y/n):${RT}"
+    read -p "${BB}> ${RT}" use_custom_terms
+    
+    local custom_terms=""
+    if [[ "$use_custom_terms" =~ ^[Yy]$ ]]; then
+        echo -e "${BB}Enter term for bad commits:${RT}"
+        read -p "${BB}> ${RT}" bad_term
+        echo -e "${BB}Enter term for good commits:${RT}"
+        read -p "${BB}> ${RT}" good_term
+        custom_terms="--term-bad=$bad_term --term-good=$good_term"
+    fi
+    
+    # Get additional options
+    echo -e "${BB}Use --no-checkout? (y/n):${RT}"
+    read -p "${BB}> ${RT}" no_checkout
+    [[ "$no_checkout" =~ ^[Yy]$ ]] && custom_terms="$custom_terms --no-checkout"
+    
+    echo -e "${BB}Use --first-parent? (y/n):${RT}"
+    read -p "${BB}> ${RT}" first_parent
+    [[ "$first_parent" =~ ^[Yy]$ ]] && custom_terms="$custom_terms --first-parent"
+    
+    # Build and execute command
+    local cmd="git bisect start $custom_terms"
+    [ ! -z "$bad_commit" ] && cmd="$cmd $bad_commit"
+    [ ! -z "$good_commit" ] && cmd="$cmd $good_commit"
+    [ ! -z "$pathspec" ] && cmd="$cmd -- $pathspec"
+    
+    echo -e "${CY}Executing: $cmd${RT}"
+    eval $cmd
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Bisect session started successfully${RT}"
+    else
+        echo -e "${RE}Failed to start bisect session${RT}"
+    fi
+}
+
+# Function to mark commits
+mark_commit() {
+    echo -e "${CY}Mark commit as:${RT}"
+    echo -e "${BB}1.${RT} Good"
+    echo -e "${BB}2.${RT} Bad"
+    read -p "${BB}> ${RT}" choice
+    
+    case $choice in
+        1) status="good" ;;
+        2) status="bad" ;;
+        *) echo -e "${RE}Invalid option${RT}"; return 1 ;;
+    esac
+    
+    echo -e "${BB}Enter commit to mark (press Enter for current):${RT}"
+    read -p "${BB}> ${RT}" commit
+    
+    local cmd="git bisect $status"
+    [ ! -z "$commit" ] && cmd="$cmd $commit"
+    
+    echo -e "${CY}Executing: $cmd${RT}"
+    eval $cmd
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Commit marked as $status successfully${RT}"
+    else
+        echo -e "${RE}Failed to mark commit${RT}"
+    fi
+}
+
+# Function to view/set terms
+manage_terms() {
+    echo -e "${CY}Terms Management:${RT}"
+    echo -e "${BB}1.${RT} View Current Terms"
+    echo -e "${BB}2.${RT} Set Custom Terms"
+    read -p "${BB}> ${RT}" choice
+    
+    case $choice in
+        1)
+            echo -e "${CY}Current Terms:${RT}"
+            git bisect terms
+            ;;
+        2)
+            echo -e "${BB}Enter term for bad commits:${RT}"
+            read -p "${BB}> ${RT}" bad_term
+            echo -e "${BB}Enter term for good commits:${RT}"
+            read -p "${BB}> ${RT}" good_term
+            
+            git bisect terms --term-bad="$bad_term" --term-good="$good_term"
+            if [ $? -eq 0 ]; then
+                echo -e "${GG}Terms updated successfully${RT}"
+            else
+                echo -e "${RE}Failed to update terms${RT}"
+            fi
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to skip commits
+skip_commit() {
+    echo -e "${BB}Enter commit or range to skip (press Enter for current):${RT}"
+    read -p "${BB}> ${RT}" commit
+    
+    local cmd="git bisect skip"
+    [ ! -z "$commit" ] && cmd="$cmd $commit"
+    
+    echo -e "${CY}Executing: $cmd${RT}"
+    eval $cmd
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Commit(s) skipped successfully${RT}"
+    else
+        echo -e "${RE}Failed to skip commit(s)${RT}"
+    fi
+}
+
+# Function to move to next commit
+next_commit() {
+    echo -e "${CY}Moving to next commit...${RT}"
+    git bisect next
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Moved to next commit successfully${RT}"
+    else
+        echo -e "${RE}Failed to move to next commit${RT}"
+    fi
+}
+
+# Function to reset bisect session
+reset_bisect() {
+    echo -e "${BB}Enter commit to reset to (press Enter for original):${RT}"
+    read -p "${BB}> ${RT}" commit
+    
+    local cmd="git bisect reset"
+    [ ! -z "$commit" ] && cmd="$cmd $commit"
+    
+    echo -e "${CY}Executing: $cmd${RT}"
+    eval $cmd
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Bisect session reset successfully${RT}"
+    else
+        echo -e "${RE}Failed to reset bisect session${RT}"
+    fi
+}
+
+# Function to visualize progress
+visualize_bisect() {
+    echo -e "${CY}Opening bisect visualization...${RT}"
+    git bisect visualize
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Visualization opened successfully${RT}"
+    else
+        echo -e "${RE}Failed to open visualization${RT}"
+    fi
+}
+
+# Function to save bisect log
+save_log() {
+    echo -e "${BB}Enter log file path:${RT}"
+    read -p "${BB}> ${RT}" log_file
+    
+    if [ -z "$log_file" ]; then
+        log_file="bisect.log"
+    fi
+    
+    echo -e "${CY}Saving bisect log to $log_file...${RT}"
+    git bisect log > "$log_file"
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Log saved successfully${RT}"
+    else
+        echo -e "${RE}Failed to save log${RT}"
+    fi
+}
+
+# Function to replay bisect log
+replay_log() {
+    echo -e "${BB}Enter log file path:${RT}"
+    read -p "${BB}> ${RT}" log_file
+    
+    if [ ! -f "$log_file" ]; then
+        echo -e "${RE}Log file not found: $log_file${RT}"
+        return 1
+    fi
+    
+    echo -e "${CY}Replaying bisect log from $log_file...${RT}"
+    git bisect replay "$log_file"
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Log replayed successfully${RT}"
+    else
+        echo -e "${RE}Failed to replay log${RT}"
+    fi
+}
+
+# Function to run automated bisect
+run_automated() {
+    echo -e "${BB}Enter command to run:${RT}"
+    read -p "${BB}> ${RT}" cmd
+    
+    if [ -z "$cmd" ]; then
+        echo -e "${RE}No command specified${RT}"
+        return 1
+    fi
+    
+    echo -e "${CY}Running automated bisect with command: $cmd${RT}"
+    git bisect run $cmd
+    if [ $? -eq 0 ]; then
+        echo -e "${GG}Automated bisect completed successfully${RT}"
+    else
+        echo -e "${RE}Automated bisect failed${RT}"
+    fi
+}
+
+# Function to show bisect status
+show_bisect_status() {
+    echo -e "${CY}Current Bisect Status:${RT}"
+    git bisect log | tail -n 5
+    echo
+    git status
+}
+
+# Main function to handle bisect operations
+git_bisect() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_bisect_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) start_bisect ;;
+            2) mark_commit ;;
+            3) manage_terms ;;
+            4) skip_commit ;;
+            5) next_commit ;;
+            6) reset_bisect ;;
+            7) visualize_bisect ;;
+            8) save_log ;;
+            9) replay_log ;;
+            10) run_automated ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        show_bisect_status
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+        clear
+    done
+}
+
+# Execute the main function
+git_bisect
