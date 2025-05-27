@@ -1,3 +1,144 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic switch operations
+basic_switch() {
+    git_status
+    echo -e "${CY}Basic Switch Options:${RT}"
+    echo -e "${BB}1.${RT} Switch to existing branch"
+    echo -e "${BB}2.${RT} Switch to previous branch"
+    echo -e "${BB}3.${RT} Create and switch to new branch"
+    echo -e "${BB}4.${RT} Force create/reset branch"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch name: ${BB}" branch
+            safe_git_exec switch "$branch"
+            ;;
+        2)
+            safe_git_exec switch -
+            ;;
+        3)
+            read -p "${GG}Enter new branch name: ${BB}" branch
+            safe_git_exec switch -c "$branch"
+            ;;
+        4)
+            read -p "${GG}Enter branch name to force create: ${BB}" branch
+            safe_git_exec switch -C "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle tracking and force options
+tracking_force_switch() {
+    git_status
+    echo -e "${CY}Tracking/Force Options:${RT}"
+    echo -e "${BB}1.${RT} Create branch with tracking"
+    echo -e "${BB}2.${RT} Force switch (discard changes)"
+    echo -e "${BB}3.${RT} Switch with merge"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter new branch name: ${BB}" branch
+            read -p "${GG}Enter upstream branch (e.g., origin/develop): ${BB}" upstream
+            safe_git_exec switch -c "$branch" --track "$upstream"
+            ;;
+        2)
+            read -p "${GG}Enter branch to switch to: ${BB}" branch
+            safe_git_exec switch -f "$branch"
+            ;;
+        3)
+            read -p "${GG}Enter branch to switch to: ${BB}" branch
+            safe_git_exec switch -m "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle detach and orphan options
+detach_orphan_switch() {
+    git_status
+    echo -e "${CY}Detach/Orphan Options:${RT}"
+    echo -e "${BB}1.${RT} Detach HEAD to commit"
+    echo -e "${BB}2.${RT} Create orphan branch"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter commit reference (e.g., HEAD~3): ${BB}" commit
+            safe_git_exec switch --detach "$commit"
+            ;;
+        2)
+            read -p "${GG}Enter orphan branch name: ${BB}" branch
+            safe_git_exec switch --orphan "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle safety and cleanup options
+safety_cleanup_switch() {
+    git_status
+    echo -e "${CY}Safety/Cleanup Options:${RT}"
+    echo -e "${BB}1.${RT} Discard changes and switch"
+    echo -e "${BB}2.${RT} Stash changes and switch"
+    echo -e "${BB}3.${RT} Commit changes and switch"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter branch to switch to: ${BB}" branch
+            safe_git_exec switch --discard-changes "$branch"
+            ;;
+        2)
+            read -p "${GG}Enter branch to switch to: ${BB}" branch
+            safe_git_exec stash
+            safe_git_exec switch "$branch"
+            safe_git_exec stash pop
+            ;;
+        3)
+            read -p "${GG}Enter commit message: ${BB}" message
+            safe_git_exec commit -am "$message"
+            read -p "${GG}Enter branch to switch to: ${BB}" branch
+            safe_git_exec switch "$branch"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle switch operations
+git_switch() {
+    echo -e "${CY}Git Switch Utility${RT}"
+    echo -e "${BB}1.${RT} Basic switch"
+    echo -e "${BB}2.${RT} Tracking/force options"
+    echo -e "${BB}3.${RT} Detach/orphan options"
+    echo -e "${BB}4.${RT} Safety/cleanup options"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_switch ;;
+        2) tracking_force_switch ;;
+        3) detach_orphan_switch ;;
+        4) safety_cleanup_switch ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}

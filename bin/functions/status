@@ -1,3 +1,214 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to explain status output
+explain_status() {
+    echo -e "${CY}Status Output Interpretation:${RT}"
+    echo -e "${BB}First Column (Staging Area):${RT}"
+    echo -e "M: Modified and staged"
+    echo -e "A: Added to staging"
+    echo -e "D: Deleted and staged"
+    echo -e "R: Renamed and staged"
+    echo -e "${BB}Second Column (Working Directory):${RT}"
+    echo -e "M: Modified but not staged"
+    echo -e "D: Deleted but not staged"
+    echo -e "??: Untracked file"
+    echo -e "${BB}Branch Status:${RT}"
+    echo -e "## branch...remote [ahead/behind N]: Branch status"
+    echo -e "## branch: No remote tracking"
+    read -p "${GG}Press Enter to continue...${RT}"
+}
+
+# Function to handle basic status operations
+basic_status() {
+    echo -e "${CY}Basic Status Options:${RT}"
+    echo -e "${BB}1.${RT} Standard detailed output"
+    echo -e "${BB}2.${RT} Short format (compact)"
+    echo -e "${BB}3.${RT} Verbose output with diffs"
+    echo -e "${BB}4.${RT} Explain status output"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status
+            ;;
+        2)
+            safe_git_exec status -s
+            ;;
+        3)
+            safe_git_exec status -vv
+            ;;
+        4)
+            explain_status
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle output format options
+format_status() {
+    echo -e "${CY}Output Format Options:${RT}"
+    echo -e "${BB}1.${RT} Short format with branch info (-s -b)"
+    echo -e "${BB}2.${RT} Machine-readable output (--porcelain)"
+    echo -e "${BB}3.${RT} NUL-terminated output (-z)"
+    echo -e "${BB}4.${RT} Long format (default)"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status -s -b
+            ;;
+        2)
+            safe_git_exec status --porcelain
+            ;;
+        3)
+            safe_git_exec status -z
+            ;;
+        4)
+            safe_git_exec status --long
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle file tracking options
+tracking_status() {
+    echo -e "${CY}File Tracking Options:${RT}"
+    echo -e "${BB}1.${RT} Show all untracked files (-uall)"
+    echo -e "${BB}2.${RT} Show ignored files (--ignored)"
+    echo -e "${BB}3.${RT} Ignore submodule changes"
+    echo -e "${BB}4.${RT} Show normal untracked files (-unormal)"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status -uall
+            ;;
+        2)
+            echo -e "${CY}Ignored Files Options:${RT}"
+            echo -e "${BB}1.${RT} Traditional format"
+            echo -e "${BB}2.${RT} Matching format"
+            read -p "${GG}Select format: ${BB}" format
+            case $format in
+                1) safe_git_exec status --ignored=traditional ;;
+                2) safe_git_exec status --ignored=matching ;;
+                *) echo -e "${RE}Invalid format${RT}"; return 1 ;;
+            esac
+            ;;
+        3)
+            echo -e "${CY}Submodule Options:${RT}"
+            echo -e "${BB}1.${RT} Ignore dirty submodules"
+            echo -e "${BB}2.${RT} Ignore all submodule changes"
+            read -p "${GG}Select option: ${BB}" subopt
+            case $subopt in
+                1) safe_git_exec status --ignore-submodules=dirty ;;
+                2) safe_git_exec status --ignore-submodules=all ;;
+                *) echo -e "${RE}Invalid option${RT}"; return 1 ;;
+            esac
+            ;;
+        4)
+            safe_git_exec status -unormal
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle advanced options
+advanced_status() {
+    echo -e "${CY}Advanced Options:${RT}"
+    echo -e "${BB}1.${RT} Show stash count (--show-stash)"
+    echo -e "${BB}2.${RT} Calculate ahead/behind (--ahead-behind)"
+    echo -e "${BB}3.${RT} Detect renames with threshold"
+    echo -e "${BB}4.${RT} Toggle rename detection"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status --show-stash
+            ;;
+        2)
+            safe_git_exec status --ahead-behind
+            ;;
+        3)
+            read -p "${GG}Enter similarity threshold (e.g., 50): ${BB}" threshold
+            safe_git_exec status -M"$threshold%"
+            ;;
+        4)
+            echo -e "${CY}Rename Detection Options:${RT}"
+            echo -e "${BB}1.${RT} Enable rename detection"
+            echo -e "${BB}2.${RT} Disable rename detection"
+            read -p "${GG}Select option: ${BB}" rename_opt
+            case $rename_opt in
+                1) safe_git_exec status --renames ;;
+                2) safe_git_exec status --no-renames ;;
+                *) echo -e "${RE}Invalid option${RT}"; return 1 ;;
+            esac
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle combined options
+combined_status() {
+    echo -e "${CY}Combined Options:${RT}"
+    echo -e "${BB}1.${RT} Compact with branch and untracked (-s -b -uall)"
+    echo -e "${BB}2.${RT} Machine-readable with NUL (-z --porcelain)"
+    echo -e "${BB}3.${RT} Verbose with submodules (-vv --ignore-submodules)"
+    echo -e "${BB}4.${RT} Script-friendly with renames (--porcelain -M50%)"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status -s -b -uall
+            ;;
+        2)
+            safe_git_exec status -z --porcelain
+            ;;
+        3)
+            safe_git_exec status -vv --ignore-submodules=dirty
+            ;;
+        4)
+            safe_git_exec status --porcelain -M50%
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle status operations
+git_status() {
+    echo -e "${CY}Git Status Utility${RT}"
+    echo -e "${BB}1.${RT} Basic status"
+    echo -e "${BB}2.${RT} Output format"
+    echo -e "${BB}3.${RT} File tracking"
+    echo -e "${BB}4.${RT} Advanced options"
+    echo -e "${BB}5.${RT} Combined options"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_status ;;
+        2) format_status ;;
+        3) tracking_status ;;
+        4) advanced_status ;;
+        5) combined_status ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}

@@ -1,3 +1,192 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle tag listing and filtering
+list_tags() {
+    echo -e "${CY}Tag Listing Options:${RT}"
+    echo -e "${BB}1.${RT} List all tags"
+    echo -e "${BB}2.${RT} List tags with messages"
+    echo -e "${BB}3.${RT} Filter tags by pattern"
+    echo -e "${BB}4.${RT} Show recent tags"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec tag
+            ;;
+        2)
+            safe_git_exec tag -n
+            ;;
+        3)
+            read -p "${GG}Enter pattern (e.g., v1.*): ${BB}" pattern
+            safe_git_exec tag -l "$pattern"
+            ;;
+        4)
+            safe_git_exec tag --sort=-creatordate -n | head -5
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle tag creation
+create_tag() {
+    echo -e "${CY}Tag Creation Options:${RT}"
+    echo -e "${BB}1.${RT} Create lightweight tag"
+    echo -e "${BB}2.${RT} Create annotated tag"
+    echo -e "${BB}3.${RT} Create signed tag"
+    echo -e "${BB}4.${RT} Tag specific commit"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec tag "$tag"
+            ;;
+        2)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter tag message: ${BB}" message
+            safe_git_exec tag -a "$tag" -m "$message"
+            ;;
+        3)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter tag message: ${BB}" message
+            read -p "${GG}Enter GPG key ID (optional): ${BB}" key
+            if [ -n "$key" ]; then
+                safe_git_exec tag -u "$key" -s "$tag" -m "$message"
+            else
+                safe_git_exec tag -s "$tag" -m "$message"
+            fi
+            ;;
+        4)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter commit hash: ${BB}" commit
+            safe_git_exec tag "$tag" "$commit"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle tag deletion
+delete_tag() {
+    echo -e "${CY}Tag Deletion Options:${RT}"
+    echo -e "${BB}1.${RT} Delete local tag"
+    echo -e "${BB}2.${RT} Delete remote tag"
+    echo -e "${BB}3.${RT} Delete all local tags"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec tag -d "$tag"
+            ;;
+        2)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter remote name (default: origin): ${BB}" remote
+            remote=${remote:-origin}
+            safe_git_exec push "$remote" --delete "$tag"
+            ;;
+        3)
+            echo -e "${YE}Warning: This will delete all local tags. Continue? (y/N)${RT}"
+            read -p "${GG}Confirm: ${BB}" confirm
+            if [[ $confirm =~ ^[Yy]$ ]]; then
+                safe_git_exec tag | xargs git tag -d
+            fi
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle tag pushing
+push_tag() {
+    echo -e "${CY}Tag Push Options:${RT}"
+    echo -e "${BB}1.${RT} Push single tag"
+    echo -e "${BB}2.${RT} Push all tags"
+    echo -e "${BB}3.${RT} Push with force"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter remote name (default: origin): ${BB}" remote
+            remote=${remote:-origin}
+            safe_git_exec push "$remote" "$tag"
+            ;;
+        2)
+            read -p "${GG}Enter remote name (default: origin): ${BB}" remote
+            remote=${remote:-origin}
+            safe_git_exec push "$remote" --tags
+            ;;
+        3)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            read -p "${GG}Enter remote name (default: origin): ${BB}" remote
+            remote=${remote:-origin}
+            safe_git_exec push -f "$remote" "$tag"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle tag verification and inspection
+verify_tag() {
+    echo -e "${CY}Tag Verification Options:${RT}"
+    echo -e "${BB}1.${RT} Verify tag signature"
+    echo -e "${BB}2.${RT} Show tag details"
+    echo -e "${BB}3.${RT} Compare tags"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec tag -v "$tag"
+            ;;
+        2)
+            read -p "${GG}Enter tag name: ${BB}" tag
+            safe_git_exec show "$tag"
+            ;;
+        3)
+            read -p "${GG}Enter first tag: ${BB}" tag1
+            read -p "${GG}Enter second tag: ${BB}" tag2
+            safe_git_exec diff "$tag1..$tag2"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle tag operations
+git_tag() {
+    echo -e "${CY}Git Tag Utility${RT}"
+    echo -e "${BB}1.${RT} List tags"
+    echo -e "${BB}2.${RT} Create tag"
+    echo -e "${BB}3.${RT} Delete tag"
+    echo -e "${BB}4.${RT} Push tag"
+    echo -e "${BB}5.${RT} Verify tag"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) list_tags ;;
+        2) create_tag ;;
+        3) delete_tag ;;
+        4) push_tag ;;
+        5) verify_tag ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
