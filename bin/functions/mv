@@ -1,3 +1,239 @@
 #!/bin/bash
 
 source /c/OnNo-git/bin/functions/utils/utils
+
+# Function to handle basic move operations
+basic_move() {
+    git_status
+    echo -e "${CY}Basic Move Options:${RT}"
+    echo -e "${BB}1.${RT} Rename file"
+    echo -e "${BB}2.${RT} Move file to directory"
+    echo -e "${BB}3.${RT} Move directory"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination file: ${BB}" dest
+            safe_git_exec mv "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv "$source" "$dest/"
+            ;;
+        3)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle force move operations
+force_move() {
+    git_status
+    echo -e "${CY}Force Move Options:${RT}"
+    echo -e "${BB}1.${RT} Force rename file"
+    echo -e "${BB}2.${RT} Force move file to directory"
+    echo -e "${BB}3.${RT} Force move directory"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination file: ${BB}" dest
+            safe_git_exec mv -f "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -f "$source" "$dest/"
+            ;;
+        3)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -f "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle dry run operations
+dry_run_move() {
+    git_status
+    echo -e "${CY}Dry Run Options:${RT}"
+    echo -e "${BB}1.${RT} Test rename file"
+    echo -e "${BB}2.${RT} Test move file to directory"
+    echo -e "${BB}3.${RT} Test move directory"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination file: ${BB}" dest
+            safe_git_exec mv -n "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -n "$source" "$dest/"
+            ;;
+        3)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -n "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle verbose operations
+verbose_move() {
+    git_status
+    echo -e "${CY}Verbose Move Options:${RT}"
+    echo -e "${BB}1.${RT} Verbose rename file"
+    echo -e "${BB}2.${RT} Verbose move file to directory"
+    echo -e "${BB}3.${RT} Verbose move directory"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination file: ${BB}" dest
+            safe_git_exec mv -v "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -v "$source" "$dest/"
+            ;;
+        3)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -v "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle skip error operations
+skip_error_move() {
+    git_status
+    echo -e "${CY}Skip Error Options:${RT}"
+    echo -e "${BB}1.${RT} Skip errors for file rename"
+    echo -e "${BB}2.${RT} Skip errors for file move"
+    echo -e "${BB}3.${RT} Skip errors for directory move"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination file: ${BB}" dest
+            safe_git_exec mv -k "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -k "$source" "$dest/"
+            ;;
+        3)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination directory: ${BB}" dest
+            safe_git_exec mv -k "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to handle sparse checkout operations
+sparse_move() {
+    git_status
+    echo -e "${CY}Sparse Checkout Options:${RT}"
+    echo -e "${BB}1.${RT} Move file outside sparse-checkout"
+    echo -e "${BB}2.${RT} Move directory outside sparse-checkout"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            read -p "${GG}Enter source file: ${BB}" source
+            read -p "${GG}Enter destination: ${BB}" dest
+            safe_git_exec mv --sparse "$source" "$dest"
+            ;;
+        2)
+            read -p "${GG}Enter source directory: ${BB}" source
+            read -p "${GG}Enter destination: ${BB}" dest
+            safe_git_exec mv --sparse "$source/" "$dest/"
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Function to verify move operations
+verify_move() {
+    git_status
+    echo -e "${CY}Verification Options:${RT}"
+    echo -e "${BB}1.${RT} Show status"
+    echo -e "${BB}2.${RT} Show staged changes"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)
+            safe_git_exec status
+            ;;
+        2)
+            safe_git_exec diff --cached
+            ;;
+        *)
+            echo -e "${RE}Invalid option${RT}"
+            return 1
+            ;;
+    esac
+}
+
+# Main function to handle move operations
+git_mv() {
+    echo -e "${CY}Git Move Utility${RT}"
+    echo -e "${BB}1.${RT} Basic move"
+    echo -e "${BB}2.${RT} Force move"
+    echo -e "${BB}3.${RT} Dry run"
+    echo -e "${BB}4.${RT} Verbose move"
+    echo -e "${BB}5.${RT} Skip errors"
+    echo -e "${BB}6.${RT} Sparse checkout"
+    echo -e "${BB}7.${RT} Verify changes"
+    read -p "${GG}Select operation: ${BB}" operation
+
+    case $operation in
+        1) basic_move ;;
+        2) force_move ;;
+        3) dry_run_move ;;
+        4) verbose_move ;;
+        5) skip_error_move ;;
+        6) sparse_move ;;
+        7) verify_move ;;
+        *)
+            echo -e "${RE}Invalid operation${RT}"
+            return 1
+            ;;
+    esac
+}
+
