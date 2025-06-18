@@ -177,6 +177,3 @@ git_add() {
         clear
     done
 }
-
-# Execute the main function
-git_add

@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source /c/OnNo-git/bin/functions/commit
-
-git_status
