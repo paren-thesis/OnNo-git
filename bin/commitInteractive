@@ -2,4 +2,4 @@
 
 source /c/OnNo-git/bin/functions/commit
 
-skip_staging_and_commit
+interactive_commit
