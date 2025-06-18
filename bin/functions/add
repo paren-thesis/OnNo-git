@@ -96,6 +96,7 @@ add_all() {
 
 # Function to add specific files
 add_specific_files() {
+    git_status
     echo -e "${CY}Enter file paths (space-separated):${RT}"
     read -p "${BB}> ${RT}" files
     

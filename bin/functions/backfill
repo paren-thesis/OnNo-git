@@ -125,5 +125,3 @@ git_backfill() {
     done
 }
 
-# Execute the main function
-git_backfill
