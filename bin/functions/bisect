@@ -285,6 +285,3 @@ git_bisect() {
         clear
     done
 }
-
-# Execute the main function
-git_bisect
