@@ -10,7 +10,7 @@ read -p "Enter line 5 of your code: " line5
 cat > "$filename" <<EOF
 #!/bin/bash
 
-source /c/OnNo-git/bin/functions/commit
+source /c/OnNo-git/bin/functions/diff
 
 $line5
 EOF

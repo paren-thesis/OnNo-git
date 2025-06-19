@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/diff
+
+detect_file_changes
