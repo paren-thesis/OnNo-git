@@ -122,23 +122,34 @@ safety_cleanup_switch() {
     esac
 }
 
-# Main function to handle switch operations
-git_switch() {
-    echo -e "${CY}Git Switch Utility${RT}"
+# Function to show available switch options
+show_switch_options() {
+    echo -e "${CY}Available Switch Options:${RT}"
     echo -e "${BB}1.${RT} Basic switch"
     echo -e "${BB}2.${RT} Tracking/force options"
     echo -e "${BB}3.${RT} Detach/orphan options"
     echo -e "${BB}4.${RT} Safety/cleanup options"
-    read -p "${GG}Select operation: ${BB}" operation
+}
 
-    case $operation in
-        1) basic_switch ;;
-        2) tracking_force_switch ;;
-        3) detach_orphan_switch ;;
-        4) safety_cleanup_switch ;;
-        *)
-            echo -e "${RE}Invalid operation${RT}"
-            return 1
-            ;;
-    esac
+# Main function to handle switch operations
+git_switch() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_switch_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) basic_switch ;;
+            2) tracking_force_switch ;;
+            3) detach_orphan_switch ;;
+            4) safety_cleanup_switch ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+    done
 }

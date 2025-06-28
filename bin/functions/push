@@ -224,9 +224,9 @@ push_network() {
     esac
 }
 
-# Main function to handle push operations
-git_push() {
-    echo -e "${CY}Git Push Utility${RT}"
+# Function to show available push options
+show_push_options() {
+    echo -e "${CY}Available Push Options:${RT}"
     echo -e "${BB}1.${RT} Basic push"
     echo -e "${BB}2.${RT} Push all"
     echo -e "${BB}3.${RT} Force push"
@@ -235,22 +235,33 @@ git_push() {
     echo -e "${BB}6.${RT} Delete remote branch"
     echo -e "${BB}7.${RT} Mirror push"
     echo -e "${BB}8.${RT} Network options"
-    read -p "${GG}Select operation: ${BB}" operation
+}
 
-    case $operation in
-        1) push_up ;;
-        2) push_up_all ;;
-        3) push_up_force ;;
-        4) push_up_tags ;;
-        5) push_up_upstream ;;
-        6) push_delete_branch ;;
-        7) push_mirror ;;
-        8) push_network ;;
-        *)
-            echo -e "${RE}Invalid operation${RT}"
-            return 1
-            ;;
-    esac
+# Main function to handle push operations
+git_push() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_push_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) push_up ;;
+            2) push_up_all ;;
+            3) push_up_force ;;
+            4) push_up_tags ;;
+            5) push_up_upstream ;;
+            6) push_delete_branch ;;
+            7) push_mirror ;;
+            8) push_network ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+    done
 }
 
 

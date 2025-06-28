@@ -168,25 +168,36 @@ verify_tag() {
     esac
 }
 
-# Main function to handle tag operations
-git_tag() {
-    echo -e "${CY}Git Tag Utility${RT}"
+# Function to show available tag options
+show_tag_options() {
+    echo -e "${CY}Available Tag Options:${RT}"
     echo -e "${BB}1.${RT} List tags"
     echo -e "${BB}2.${RT} Create tag"
     echo -e "${BB}3.${RT} Delete tag"
     echo -e "${BB}4.${RT} Push tag"
     echo -e "${BB}5.${RT} Verify tag"
-    read -p "${GG}Select operation: ${BB}" operation
+}
 
-    case $operation in
-        1) list_tags ;;
-        2) create_tag ;;
-        3) delete_tag ;;
-        4) push_tag ;;
-        5) verify_tag ;;
-        *)
-            echo -e "${RE}Invalid operation${RT}"
-            return 1
-            ;;
-    esac
+# Main function to handle tag operations
+git_tag() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_tag_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) list_tags ;;
+            2) create_tag ;;
+            3) delete_tag ;;
+            4) push_tag ;;
+            5) verify_tag ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+    done
 }

@@ -639,8 +639,9 @@ manage_branch_stashes() {
     show_success "Stash operation completed successfully!"
 }
 
-git_branch() {
-    echo -e "${CY}Git Branch Management${RT}"
+# Function to show available branch options
+show_branch_options() {
+    echo -e "${CY}Available Branch Options:${RT}"
     echo -e "${BB}1.${RT} Create new branch"
     echo -e "${BB}2.${RT} Delete branch"
     echo -e "${BB}3.${RT} Merge branch"
@@ -653,28 +654,34 @@ git_branch() {
     echo -e "${BB}10.${RT} Compare branches"
     echo -e "${BB}11.${RT} Manage tags"
     echo -e "${BB}12.${RT} Manage stashes"
-    echo -e "${BB}0.${RT} Exit"
-    read -p "${GG}Select option: ${BB}" option
-
-    case $option in
-        1)create_new_branch;;
-        2)delete_branch;;
-        3)merge_branch;;
-        4)list_branches;;
-        5)switch_branch;;
-        6)create_remote_branch;;
-        7)rename_branch;;
-        8)view_branch_history;;
-        9)show_branch_details;;
-        10)compare_branches;;
-        11)manage_tags;;
-        12)manage_branch_stashes;;
-        0)echo -e "${GG}Exiting branch management...${RT}"
-            return 0;;
-        *)
-            echo -e "${RE}Invalid option. Please try again.${RT}"
-            return 1
-            ;;
-    esac
 }
+
+git_branch() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_branch_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) create_new_branch ;;
+            2) delete_branch ;;
+            3) merge_branch ;;
+            4) list_branches ;;
+            5) switch_branch ;;
+            6) create_remote_branch ;;
+            7) rename_branch ;;
+            8) view_branch_history ;;
+            9) show_branch_details ;;
+            10) compare_branches ;;
+            11) manage_tags ;;
+            12) manage_branch_stashes ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+    done
 }
