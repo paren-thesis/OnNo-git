@@ -121,7 +121,6 @@ git_backfill() {
         show_backfill_status
         echo
         read -p "${BB}Press Enter to continue...${RT}"
-        clear
     done
 }
 

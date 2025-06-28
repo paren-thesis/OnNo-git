@@ -281,7 +281,6 @@ git_bisect() {
         echo
         show_bisect_status
         echo
-        read -p "${BB}Press Enter to continue...${RT}"
-        clear
+        read -p "${BB}Press Enter to continue...${RT}"   
     done
 }

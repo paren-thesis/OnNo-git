@@ -175,6 +175,5 @@ git_add() {
         
         echo
         read -p "${BB}Press Enter to continue...${RT}"
-        clear
     done
 }

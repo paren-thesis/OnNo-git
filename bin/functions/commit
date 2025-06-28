@@ -327,3 +327,56 @@ commit_with_hook_control() {
     fi
     show_success "Commit completed with hook control"
 }
+
+# Function to show available commit options
+show_commit_options() {
+    echo -e "${CY}Available Commit Options:${RT}"
+    echo -e "${BB}1.${RT} Commit with message (basic/no-verify/dry-run)"
+    echo -e "${BB}2.${RT} Commit all changes (add -A + commit)"
+    echo -e "${BB}3.${RT} Skip staging and commit directly"
+    echo -e "${BB}4.${RT} Commit and sign with GPG"
+    echo -e "${BB}5.${RT} Commit specific files"
+    echo -e "${BB}6.${RT} Interactive commit"
+    echo -e "${BB}7.${RT} Commit with pathspec from file"
+    echo -e "${BB}8.${RT} Commit with custom date"
+    echo -e "${BB}9.${RT} Empty commit (--allow-empty)"
+    echo -e "${BB}10.${RT} Amend last commit"
+    echo -e "${BB}11.${RT} Undo last commit (soft reset)"
+    echo -e "${BB}12.${RT} View commit history"
+    echo -e "${BB}13.${RT} Commit with status output"
+    echo -e "${BB}14.${RT} Commit with untracked files options"
+    echo -e "${BB}15.${RT} Commit with hook control"
+}
+
+git_commit() {
+    check_git_repo || return 1
+    
+    while true; do
+        show_commit_options
+        echo -e "${BB}Enter option number (or 'q' to quit):${RT}"
+        read -p "${BB}> ${RT}" choice
+        
+        case $choice in
+            1) commit_with_message ;;
+            2) commit_all_changes ;;
+            3) skip_staging_and_commit ;;
+            4) commit_and_sign ;;
+            5) commit_specific_files ;;
+            6) interactive_commit ;;
+            7) commit_with_pathspec ;;
+            8) commit_with_date ;;
+            9) empty_commit ;;
+            10) amend_last_commit ;;
+            11) undo_last_commit ;;
+            12) view_commit_history ;;
+            13) commit_with_status ;;
+            14) commit_with_untracked ;;
+            15) commit_with_hook_control ;;
+            q|Q) echo -e "${GG}Exiting...${RT}"; break ;;
+            *) echo -e "${RE}Invalid option${RT}" ;;
+        esac
+        
+        echo
+        read -p "${BB}Press Enter to continue...${RT}"
+    done
+}

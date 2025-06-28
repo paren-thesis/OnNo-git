@@ -638,3 +638,43 @@ manage_branch_stashes() {
     esac
     show_success "Stash operation completed successfully!"
 }
+
+git_branch() {
+    echo -e "${CY}Git Branch Management${RT}"
+    echo -e "${BB}1.${RT} Create new branch"
+    echo -e "${BB}2.${RT} Delete branch"
+    echo -e "${BB}3.${RT} Merge branch"
+    echo -e "${BB}4.${RT} List branches"
+    echo -e "${BB}5.${RT} Switch branch"
+    echo -e "${BB}6.${RT} Create remote branch"
+    echo -e "${BB}7.${RT} Rename branch"
+    echo -e "${BB}8.${RT} View branch history"
+    echo -e "${BB}9.${RT} Show branch details"
+    echo -e "${BB}10.${RT} Compare branches"
+    echo -e "${BB}11.${RT} Manage tags"
+    echo -e "${BB}12.${RT} Manage stashes"
+    echo -e "${BB}0.${RT} Exit"
+    read -p "${GG}Select option: ${BB}" option
+
+    case $option in
+        1)create_new_branch;;
+        2)delete_branch;;
+        3)merge_branch;;
+        4)list_branches;;
+        5)switch_branch;;
+        6)create_remote_branch;;
+        7)rename_branch;;
+        8)view_branch_history;;
+        9)show_branch_details;;
+        10)compare_branches;;
+        11)manage_tags;;
+        12)manage_branch_stashes;;
+        0)echo -e "${GG}Exiting branch management...${RT}"
+            return 0;;
+        *)
+            echo -e "${RE}Invalid option. Please try again.${RT}"
+            return 1
+            ;;
+    esac
+}
+}
