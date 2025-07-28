@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/merge
+
+merge_strategy
