@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/rm
+
+dry_run_safety_remove

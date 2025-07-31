@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/rm
+
+cached_force_remove
