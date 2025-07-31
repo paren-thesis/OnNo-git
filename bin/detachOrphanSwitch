@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/switch
+datach_orphan_switch

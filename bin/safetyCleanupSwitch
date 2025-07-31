@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/switch
+safety_cleanup_switch
