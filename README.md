@@ -108,7 +108,7 @@ Run `./install.sh`
 
 1. Clone the repository into your C: drive:
     ```
-    git clone https://github.com/paren-thesis/OnNo-git.git C:\OnNo-git
+    git clone https://github.com/paren-thesis/OnNo-git.git
     ```
 2. Add the bin directory to your PATH:
     - If using Git Bash: Add this line to your ~/.bashrc:
@@ -119,7 +119,6 @@ Run `./install.sh`
         ```
         [Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\OnNo-git\bin", "User")
         ```
-    - If using Command Prompt: Add C:\OnNo-git\bin to your system PATH through System Properties > Environment Variables
 
 ## Uninstallation
 
