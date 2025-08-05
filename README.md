@@ -75,10 +75,10 @@ A sophisticated Git workflow automation system that provides an interactive, use
 ### Commit Operations
 
 -   ✅ `onno-commit` - Interactive commit operations with multiple options
--   📝 `onno-commit --message` - Commit with customizable messages
--   🕒 `onno-commit --date` - Commit with specific dates
--   🔏 `onno-commit --sign` - GPG-signed commits
--   ↩️ `onno-commit --amend` - Modify the last commit
+-   📝 `onno-commit` - Commit with customizable messages
+-   🕒 `onno-commit` - Commit with specific dates
+-   🔏 `onno-commit` - GPG-signed commits
+-   ↩️ `onno-commit` - Modify the last commit
 
 ### Remote Operations
 
