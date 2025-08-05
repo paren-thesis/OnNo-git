@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source /c/OnNo-git/bin/functions/tag
+verify_tag
