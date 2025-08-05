@@ -1,4 +1,4 @@
-# OnNo-Git
+# `OnNo-git`
 
 A sophisticated Git workflow automation system that provides an interactive, user-friendly interface for common and advanced Git operations. This tool simplifies complex Git commands while adding safety checks and enhanced functionality.
 
