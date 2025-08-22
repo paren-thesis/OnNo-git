@@ -665,7 +665,7 @@ git_branch() {
         read -p "${BB}> ${RT}" choice
         
         case $choice in
-            1) create_new_branch ;;
+            1) create_branch ;;
             2) delete_branch ;;
             3) merge_branch ;;
             4) list_branches ;;
